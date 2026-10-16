@@ -1,0 +1,63 @@
+{
+  "name": "3am",
+  "private": true,
+  "version": "0.1.0",
+  "description": "3 AM: an interactive course on incident response, played as night-shift cases.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -b",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "e2e": "playwright test",
+    "check:i18n": "tsx scripts/check-i18n.ts",
+    "check:solvable": "tsx scripts/check-solvable.ts",
+    "check": "npm run typecheck && npm run lint && npm run test && npm run check:i18n && npm run check:solvable"
+  },
+  "dependencies": {
+    "@codemirror/autocomplete": "6.20.3",
+    "@codemirror/language": "6.13.1",
+    "@codemirror/state": "6.7.6",
+    "@codemirror/view": "6.43.14",
+    "@fontsource-variable/fraunces": "5.3.0",
+    "@fontsource/ibm-plex-mono": "5.3.0",
+    "@lezer/common": "1.5.3",
+    "@lezer/highlight": "1.2.5",
+    "@lezer/lr": "1.4.11",
+    "@prometheus-io/lezer-promql": "0.313.4",
+    "@tanstack/react-virtual": "3.14.20",
+    "@xstate/react": "6.1.0",
+    "elkjs": "0.12.0",
+    "motion": "14.3.0",
+    "pure-rand": "8.4.2",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "simplex-noise": "4.0.3",
+    "uplot": "1.6.32",
+    "xstate": "5.33.2",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.64.1",
+    "@types/node": "24.19.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "eslint": "10.12.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "globals": "17.13.0",
+    "tsx": "4.23.15",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.71.2",
+    "vite": "8.3.4",
+    "vitest": "5.0.5"
+  }
+}
