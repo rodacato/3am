@@ -73,7 +73,7 @@ for (const locale of LOCALES) {
   });
 }
 
-test('progress survives a reload', async ({ page }) => {
+test('progress survives a reload', { tag: '@smoke' }, async ({ page }) => {
   const { ui } = strings('en');
   await freshStart(page, 'en');
   await page.getByRole('button', { name: ui('folder.start') }).click();
