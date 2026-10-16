@@ -6,6 +6,7 @@ import { styleTags, tags } from '@lezer/highlight';
 import { parser } from '@prometheus-io/lezer-promql';
 import { useEffect, useRef } from 'react';
 import type { MetricVocabulary } from '../../telemetry/source';
+import { useLatest } from '../useLatest';
 
 const promql = LRLanguage.define({
   name: 'promql',
@@ -85,8 +86,7 @@ type Props = { value: string; onChange: (v: string) => void; onRun: () => void; 
 export function PromQLEditor({ value, onChange, onRun, vocabulary, placeholder, label }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView | null>(null);
-  const callbacks = useRef({ onChange, onRun });
-  callbacks.current = { onChange, onRun };
+  const callbacks = useLatest({ onChange, onRun });
 
   useEffect(() => {
     if (!host.current) return;

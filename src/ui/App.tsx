@@ -38,7 +38,7 @@ function CaseRoom({ loaded, stored, setStored, client, locale, vocabulary, onRes
 }) {
   const { data } = loaded;
   const reducedMotion = useReducedMotion();
-  const bridge = useMemo(createStandaloneBridge, []);
+  const bridge = useMemo(() => createStandaloneBridge(), []);
   const initial = stored.sessions[data.id] ?? freshSession(FIRST_SEED);
   const persist = useCallback((s: CaseSession) => setStored((prev) => ({ ...prev, sessions: { ...prev.sessions, [data.id]: s } })), [data.id, setStored]);
   const session = useCaseSession(data, initial, client, persist);

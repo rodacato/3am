@@ -45,7 +45,7 @@ function Slip({ pin, containerRef, dispatch, selected, onSelect }: { pin: Pin; c
       tabIndex={0}
       aria-pressed={selected}
       aria-label={t('board.slipLabel', { line: pin.lines[0] ?? '' })}
-      style={{ left: `${position.x * 100}%`, top: `${position.y * 100}%`, rotate: `${pin.rot}deg` }}
+      style={{ left: `min(${position.x * 100}%, calc(100% - 210px))`, top: `${position.y * 100}%`, rotate: `${pin.rot}deg` }}
       {...handlers}
       onPointerUp={() => { if (!handlers.onPointerUp()) onSelect(); }}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onSelect(); }}
@@ -82,7 +82,7 @@ function HypothesisCard({ h, index, data, containerRef, dispatch, tieMode, onTie
       className="hypothesis"
       data-status={h.status}
       data-tie={tieMode}
-      style={{ left: `${position.x * 100}%`, top: `${position.y * 100}%`, rotate: h.status === 'refuted' ? '-5deg' : `${index % 2 ? 1.2 : -1}deg`, translate: h.status === 'refuted' ? '0 10px' : undefined }}
+      style={{ left: `min(${position.x * 100}%, calc(100% - 248px))`, top: `${position.y * 100}%`, rotate: h.status === 'refuted' ? '-5deg' : `${index % 2 ? 1.2 : -1}deg`, translate: h.status === 'refuted' ? '0 10px' : undefined }}
       {...handlers}
       onPointerUp={(e) => {
         const moved = handlers.onPointerUp();

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { SOURCES } from '../../content/sources';
 import { reportMethod } from '../../engine/scoring';
 import { clockLabel } from '../../engine/time';
@@ -14,6 +14,24 @@ export function Debrief({ session, reducedMotion, onReplay, onReset }: Props) {
   const report = useMemo(() => reportMethod(data, seed, context, board, postmortem), [data, seed, context, board, postmortem]);
   const named = new Set(report.factorsNamed.matched);
   const covered = report.coverage.filter((c) => c.covered).length;
+  const [exporting, setExporting] = useState(false);
+
+  const takeHome = async () => {
+    setExporting(true);
+    try {
+      const files = await session.exportIncident();
+      for (const [signal, payload] of Object.entries(files)) {
+        const url = URL.createObjectURL(new Blob([JSON.stringify(payload)], { type: 'application/json' }));
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `3am-${data.id}-seed${seed}-${signal}.otlp.json`;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+      }
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const path = [
     { at: data.page.at, text: t('debrief.path.paged'), kind: 'event', useful: false },
@@ -75,7 +93,12 @@ export function Debrief({ session, reducedMotion, onReplay, onReset }: Props) {
         </ul>
         <div className="row" style={{ marginTop: 22, justifyContent: 'space-between' }}>
           <button className="big-button big-button--ghost" onClick={onReset}>{t('debrief.reset')}</button>
-          <button className="big-button" onClick={onReplay}>{t('debrief.replay')}</button>
+          <span className="row">
+            <button className="big-button big-button--ghost" onClick={() => void takeHome()} disabled={exporting} title={t('debrief.takeHomeHint')}>
+              {exporting ? t('debrief.packing') : t('debrief.takeHome')}
+            </button>
+            <button className="big-button" onClick={onReplay}>{t('debrief.replay')}</button>
+          </span>
         </div>
       </article>
     </div>

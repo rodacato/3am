@@ -1,13 +1,10 @@
 {
   "meta.name": "Español",
   "meta.short": "ES",
-
   "app.loading": "Calentando el monitor…",
   "app.failed": "Se fue la luz en el edificio. Recarga para intentarlo de nuevo.",
-
   "window.label": "La ventana: la ciudad y la evidencia pegada al vidrio",
   "sill.caption": "{title} · Mercadito · {clock}",
-
   "prefs.language": "Idioma",
   "prefs.soundOn": "SONIDO SÍ",
   "prefs.soundOff": "SONIDO NO",
@@ -15,7 +12,6 @@
   "reset.question": "¿Borrar todos los casos, notas y preferencias? La noche empieza de cero y no hay vuelta atrás.",
   "reset.keep": "Conservar todo",
   "reset.confirm": "Borrar todo",
-
   "tool.metrics": "métricas",
   "tool.dashboard": "tablero",
   "tool.logs": "logs",
@@ -25,7 +21,6 @@
   "tool.runbook": "runbook",
   "tool.map": "mapa",
   "tool.statusUpdate": "actualización",
-
   "folder.tab": "CASO {number}",
   "folder.kicker": "MERCADITO · TURNO DE NOCHE",
   "folder.howTitle": "Cómo funciona la noche",
@@ -35,7 +30,6 @@
   "folder.closedBefore.other": "Cerraste este caso {runs} veces. Misma ciudad, mismo bug; otra noche de ruido si lo repites.",
   "folder.replay": "Repetir otra noche",
   "folder.start": "Empezar el turno",
-
   "phone.label": "Teléfono",
   "phone.date": "JUE 12 MAR",
   "phone.sincePage": "+{minutes} MIN DESDE EL AVISO",
@@ -55,7 +49,6 @@
   "phone.later": "Después",
   "phone.sent": "Actualización enviada a las {clock}.",
   "phone.close": "CERRAR EL CASO",
-
   "monitor.label": "Monitor",
   "monitor.locked": "Pantalla bloqueada. Solo el teléfono está despierto.",
   "monitor.tab.dashboards": "TABLEROS",
@@ -70,47 +63,38 @@
   "monitor.running": "CONSULTANDO…",
   "monitor.ranAt": "corrió a las {clock} · costó {cost} min",
   "monitor.tear": "ARRANCAR",
-
   "metrics.placeholder": "PromQL. Ctrl/⌘+Enter la corre.",
   "metrics.editorLabel": "Consulta PromQL",
   "metrics.subset": "Este escritorio habla un subconjunto de PromQL: selectores, rate, increase, histogram_quantile, sum/avg/min/max/count by, aritmética y comparaciones.",
   "metrics.dragToPin": "arrastra sobre la gráfica para arrancar un rango",
   "metrics.noSeries": "Ninguna serie. O no pasó nada, o esa no es la pregunta.",
-
   "dashboard.hint": "Un tablero es la apuesta de alguien más sobre lo que importa. Casi siempre una decente.",
   "dashboard.edit": "editar consulta",
-
   "logs.filterLabel": "Filtro de logs",
   "logs.syntax": "service:nombre  level:warn+  \"texto\"  -excluir  trace:id  since:30m  from:03:00 to:03:20",
   "logs.count.one": "1 línea · {from}–{to}",
   "logs.count.other": "{count} líneas · {from}–{to}",
   "logs.none": "Nada coincidió. El silencio también es un dato, aunque flaco.",
-
   "traces.filterLabel": "Filtro de trazas",
   "traces.syntax": "service:nombre  operation:\"POST /orders\"  min:4s  status:error  since:15m",
   "traces.count": "las {count} más lentas de {scanned} trazas · {from}–{to}",
   "traces.openCost": "abrir una cuesta {cost} min",
   "traces.none": "Ninguna traza coincidió.",
   "traces.back": "← volver a la lista",
-
   "changes.pull": "SACAR EL REGISTRO DE CAMBIOS",
   "changes.hint": "Despliegues, cambios de configuración y flags desde la medianoche.",
-
   "actions.hint": "Cada acción cambia el sistema desde el momento en que surte efecto. Algunas ayudan. Otras solo se sienten como ayuda.",
   "actions.tried": "intentada",
   "actions.do": "HACERLO",
   "actions.go": "ADELANTE",
   "actions.notYet": "todavía no",
-
   "watch.cost": "Empezó {start}, surte efecto {end}. Mirando la línea.",
   "watch.loading": "Esperando el siguiente scrape…",
   "watch.cleared": "La línea regresa. En calma desde las {clock}.",
   "watch.nothing": "Nada cambió. Igual miraste {minutes} minutos.",
-
   "tray.label": "RECIBOS",
   "tray.empty": "Cada consulta imprime un recibo aquí. Todavía ninguno.",
   "tray.changelog": "registro de cambios",
-
   "board.empty": "No hay evidencia pegada. Empieza por lo que cambió.",
   "board.newHypothesis": "+ HIPÓTESIS",
   "board.tieHint": "Haz clic en una hipótesis para atarle este papel.",
@@ -132,7 +116,6 @@
   "board.markAlibi": "coartada",
   "board.reopen": "reabrir",
   "board.edit": "editar",
-
   "error.promql.syntax": "Eso no se puede interpretar.",
   "error.promql.unsupported_function": "Este escritorio no conoce esa función.",
   "error.promql.unsupported_aggregation": "Este escritorio no hace esa agregación.",
@@ -148,13 +131,11 @@
   "error.filter.unclosed_quote": "Unas comillas nunca se cerraron.",
   "error.missing.dashboard": "No existe ese tablero.",
   "error.missing.trace": "Esa traza ya no está.",
-
   "rubric.blameTerms": "culpa|culpable|descuido|descuidado|negligente|negligencia|debió|debería haber|error humano|incompetente|torpe|fault|blame|careless|negligent|should have|human error|sloppy",
   "rubric.status.impact": "Dice qué tan grave es, con números.",
   "rubric.status.nextUpdate": "Dice cuándo vuelves a escribir.",
   "rubric.status.length": "Lo bastante corto para leerse en un teléfono ({length} caracteres).",
   "rubric.status.blameless": "Describe el sistema, no a una persona.",
-
   "rubric.pm.timeline.pass": "La línea de tiempo tiene {count} entradas con hora. Alguien ajeno podría seguirla.",
   "rubric.pm.timeline.fail": "La línea de tiempo tiene {count} entradas con hora. Tres es lo mínimo que necesita alguien ajeno.",
   "rubric.pm.impact.pass": "El impacto está en números.",
@@ -175,7 +156,6 @@
   "rubric.pm.wentWell.fail": "Lo que salió bien está vacío. Algo salió bien, o no estarías escribiendo esto.",
   "rubric.pm.selfReadable": "Alguien que durmió toda la noche podría seguir esto.",
   "rubric.pm.selfWhyNotWho": "Cada factor explica por qué fue posible, no quién lo hizo.",
-
   "pm.kicker": "POSTMORTEM · SIN CULPAS",
   "pm.title": "{title}: qué pasó",
   "pm.lede": "Escrito para el turno de la mañana. Primero los hechos, sin villanos.",
@@ -206,7 +186,6 @@
   "pm.review": "RELEERLO",
   "pm.keepEditing": "Seguir editando",
   "pm.file": "ARCHIVARLO",
-
   "debrief.kicker": "CASO CERRADO · REVISIÓN",
   "debrief.title": "Lo que en realidad estaba pasando",
   "debrief.stat.mitigate": "MINUTOS HASTA LA CALMA",
@@ -239,7 +218,6 @@
   "debrief.readNext": "Qué leer después",
   "debrief.reset": "Borrar todo",
   "debrief.replay": "Repetir otra noche",
-
   "source.sre-book-postmortems.note": "Por qué los postmortems se escriben sin culpas y qué hace que valga la pena leer uno.",
   "source.sre-book-incident.note": "Roles, comunicación y quien coordina el incidente, contado por quienes lo formalizaron.",
   "source.sre-workbook-incident.note": "Ejemplos trabajados de incidentes y cómo se respondió de verdad.",
@@ -247,5 +225,8 @@
   "source.use-method.note": "Utilización, saturación, errores: las tres preguntas para cada recurso.",
   "source.observability-engineering.note": "Por qué los eventos de alta cardinalidad le ganan a las agregaciones previas cuando la pregunta es nueva.",
   "source.field-guide-human-error.note": "Por qué el \"error humano\" es donde empieza una investigación, no donde termina.",
-  "source.how-complex-systems-fail.note": "Dieciocho observaciones breves. La número 3 es este caso."
+  "source.how-complex-systems-fail.note": "Dieciocho observaciones breves. La número 3 es este caso.",
+  "debrief.takeHome": "Llevarte el caso a casa",
+  "debrief.takeHomeHint": "Descarga las trazas, logs y métricas de esta noche como OTLP JSON, listos para Jaeger, Grafana o un OpenTelemetry Collector.",
+  "debrief.packing": "Empacando la evidencia…"
 }

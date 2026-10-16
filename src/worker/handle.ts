@@ -1,5 +1,6 @@
 import type { CaseData } from '../engine/case-schema';
 import { observeMitigation, runTool } from '../engine/tools';
+import { exportIncident } from '../telemetry/otlp';
 import { pulseAt } from '../telemetry/pulse';
 import { metricVocabulary } from '../telemetry/source';
 import type { ScenarioRef, WorkerRequest, WorkerResult } from './protocol';
@@ -16,6 +17,8 @@ export async function handleRequest<R extends WorkerRequest>(body: R, loadCase: 
       return pulseAt(await scenario(body.scenario), body.now) as WorkerResult<R>;
     case 'observe':
       return { clearsAt: observeMitigation(await scenario(body.scenario), body.effectiveAt) } as WorkerResult<R>;
+    case 'export':
+      return exportIncident(await scenario(body.scenario), body.fromMin, body.toMin) as WorkerResult<R>;
     case 'vocabulary':
       return metricVocabulary({ data: await loadCase(body.caseId), seed: 0, mitigations: [] }) as WorkerResult<R>;
   }

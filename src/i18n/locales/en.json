@@ -1,13 +1,10 @@
 {
   "meta.name": "English",
   "meta.short": "EN",
-
   "app.loading": "Warming up the monitor…",
   "app.failed": "The building lost power. Reload to try again.",
-
   "window.label": "The window: the city, and the evidence taped to the glass",
   "sill.caption": "{title} · Mercadito · {clock}",
-
   "prefs.language": "Language",
   "prefs.soundOn": "SOUND ON",
   "prefs.soundOff": "SOUND OFF",
@@ -15,7 +12,6 @@
   "reset.question": "Clear every case, note and preference? The night starts over and nothing comes back.",
   "reset.keep": "Keep everything",
   "reset.confirm": "Clear it all",
-
   "tool.metrics": "metrics",
   "tool.dashboard": "dashboard",
   "tool.logs": "logs",
@@ -25,7 +21,6 @@
   "tool.runbook": "runbook",
   "tool.map": "map",
   "tool.statusUpdate": "status update",
-
   "folder.tab": "CASE {number}",
   "folder.kicker": "MERCADITO · NIGHT SHIFT",
   "folder.howTitle": "How the night works",
@@ -35,7 +30,6 @@
   "folder.closedBefore.other": "You closed this case {runs} times. Same city, same bug; a different night of noise if you replay it.",
   "folder.replay": "Replay a different night",
   "folder.start": "Start the shift",
-
   "phone.label": "Phone",
   "phone.date": "THU 12 MAR",
   "phone.sincePage": "+{minutes} MIN SINCE THE PAGE",
@@ -55,7 +49,6 @@
   "phone.later": "Later",
   "phone.sent": "Status sent at {clock}.",
   "phone.close": "CLOSE THE CASE",
-
   "monitor.label": "Monitor",
   "monitor.locked": "Screen locked. The phone is the only thing awake.",
   "monitor.tab.dashboards": "DASHBOARDS",
@@ -70,47 +63,38 @@
   "monitor.running": "QUERYING…",
   "monitor.ranAt": "ran at {clock} · cost {cost} min",
   "monitor.tear": "TEAR OFF",
-
   "metrics.placeholder": "PromQL. Ctrl/⌘+Enter runs it.",
   "metrics.editorLabel": "PromQL query",
   "metrics.subset": "This desk speaks a subset of PromQL: selectors, rate, increase, histogram_quantile, sum/avg/min/max/count by, arithmetic and comparisons.",
   "metrics.dragToPin": "drag across the chart to tear off a range",
   "metrics.noSeries": "No series. Either nothing happened, or that isn't the question.",
-
   "dashboard.hint": "A dashboard is somebody else's guess about what matters. Usually a decent one.",
   "dashboard.edit": "edit query",
-
   "logs.filterLabel": "Log filter",
   "logs.syntax": "service:name  level:warn+  \"text\"  -exclude  trace:id  since:30m  from:03:00 to:03:20",
   "logs.count.one": "1 line · {from}–{to}",
   "logs.count.other": "{count} lines · {from}–{to}",
   "logs.none": "Nothing matched. Silence is also data, but not much.",
-
   "traces.filterLabel": "Trace filter",
   "traces.syntax": "service:name  operation:\"POST /orders\"  min:4s  status:error  since:15m",
   "traces.count": "{count} slowest of {scanned} traces · {from}–{to}",
   "traces.openCost": "opening one costs {cost} min",
   "traces.none": "No traces matched.",
   "traces.back": "← back to the list",
-
   "changes.pull": "PULL THE CHANGE LOG",
   "changes.hint": "Deploys, config pushes and flags since midnight.",
-
   "actions.hint": "Each action changes the system from the moment it lands. Some help. Some only feel like help.",
   "actions.tried": "tried",
   "actions.do": "DO IT",
   "actions.go": "GO",
   "actions.notYet": "not yet",
-
   "watch.cost": "Started {start}, lands {end}. Watching the line.",
   "watch.loading": "Waiting for the next scrape…",
   "watch.cleared": "The line bends back. Quiet since {clock}.",
   "watch.nothing": "Nothing changed. You watched for {minutes} minutes anyway.",
-
   "tray.label": "RECEIPTS",
   "tray.empty": "Every query prints a receipt here. None yet.",
   "tray.changelog": "change log",
-
   "board.empty": "No evidence pinned. Start with what changed.",
   "board.newHypothesis": "+ HYPOTHESIS",
   "board.tieHint": "Click a hypothesis to tie this slip to it.",
@@ -132,7 +116,6 @@
   "board.markAlibi": "alibi",
   "board.reopen": "reopen",
   "board.edit": "edit",
-
   "error.promql.syntax": "That doesn't parse.",
   "error.promql.unsupported_function": "This desk doesn't know that function.",
   "error.promql.unsupported_aggregation": "This desk doesn't do that aggregation.",
@@ -148,13 +131,11 @@
   "error.filter.unclosed_quote": "A quote never closed.",
   "error.missing.dashboard": "No such dashboard.",
   "error.missing.trace": "That trace is gone.",
-
   "rubric.blameTerms": "fault|blame|careless|carelessness|negligent|negligence|should have|human error|incompetent|sloppy|stupid|culpa|descuido|negligente|debió|error humano|torpe",
   "rubric.status.impact": "Says how bad it is, in numbers.",
   "rubric.status.nextUpdate": "Says when you'll speak again.",
   "rubric.status.length": "Short enough to read on a phone ({length} characters).",
   "rubric.status.blameless": "Describes the system, not a person.",
-
   "rubric.pm.timeline.pass": "The timeline has {count} timestamped entries. A stranger could follow it.",
   "rubric.pm.timeline.fail": "The timeline has {count} timestamped entries. Three is the least a stranger needs.",
   "rubric.pm.impact.pass": "Impact is in numbers.",
@@ -175,7 +156,6 @@
   "rubric.pm.wentWell.fail": "What went well is empty. Something did, or you wouldn't be writing this.",
   "rubric.pm.selfReadable": "Someone who slept through it could follow this.",
   "rubric.pm.selfWhyNotWho": "Every factor explains why it was possible, not who did it.",
-
   "pm.kicker": "POSTMORTEM · BLAMELESS",
   "pm.title": "{title}: what happened",
   "pm.lede": "Written for the morning shift. Facts first, no villains.",
@@ -206,7 +186,6 @@
   "pm.review": "READ IT BACK",
   "pm.keepEditing": "Keep editing",
   "pm.file": "FILE IT",
-
   "debrief.kicker": "CASE CLOSED · DEBRIEF",
   "debrief.title": "What was really going on",
   "debrief.stat.mitigate": "MINUTES TO STABLE",
@@ -239,7 +218,6 @@
   "debrief.readNext": "What to read next",
   "debrief.reset": "Reset everything",
   "debrief.replay": "Replay a different night",
-
   "source.sre-book-postmortems.note": "Why postmortems are written without blame, and what makes one worth reading.",
   "source.sre-book-incident.note": "Roles, communication and the incident commander, from the people who formalized it.",
   "source.sre-workbook-incident.note": "Worked examples of incidents and how the response actually went.",
@@ -247,5 +225,8 @@
   "source.use-method.note": "Utilization, saturation, errors: the three questions to ask every resource.",
   "source.observability-engineering.note": "Why high-cardinality events beat pre-aggregated guesses when the question is new.",
   "source.field-guide-human-error.note": "Why \"human error\" is where an investigation should start, not end.",
-  "source.how-complex-systems-fail.note": "Eighteen short observations. Number 3 is this case."
+  "source.how-complex-systems-fail.note": "Eighteen short observations. Number 3 is this case.",
+  "debrief.takeHome": "Take the case home",
+  "debrief.takeHomeHint": "Download this night's traces, logs and metrics as OTLP JSON, ready for Jaeger, Grafana or an OpenTelemetry Collector.",
+  "debrief.packing": "Packing the evidence…"
 }

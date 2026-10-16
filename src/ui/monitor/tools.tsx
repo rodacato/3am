@@ -1,5 +1,5 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef } from 'react';
 import type { ToolName } from '../../engine/case-schema';
 import { clockLabel, clockLabelSeconds } from '../../engine/time';
 import type { ToolError, ToolRequest, ToolResponse } from '../../engine/tools';
@@ -221,15 +221,11 @@ function Waterfall({ spans, onPin }: { spans: Span[]; onPin: (s: Span) => void }
   );
 }
 
-export function TracesTool({ session, run, busy, last, pin, draft, setDraft, onBack }: ToolProps & { onBack: () => void }) {
+export function TracesTool({ session, run, busy, last, list, pin, draft, setDraft, onBack }: ToolProps & { list: RunResult | null; onBack: () => void }) {
   const { t } = useI18n();
-  const [list, setList] = useState<RunResult | null>(null);
   const r = last?.response;
   const showingTrace = r?.ok && r.data.tool === 'trace';
   const listResult = r?.ok && r.data.tool === 'traces' ? last : list;
-  useEffect(() => {
-    if (last?.response.ok && last.response.data.tool === 'traces') setList(last);
-  }, [last]);
   const doRun = () => void run({ tool: 'traces', filter: draft });
   const lr = listResult?.response;
   return (

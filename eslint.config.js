@@ -13,6 +13,8 @@ export default tseslint.config(
     rules: {
       ...reactHooks.configs.recommended.rules,
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      // The React Compiler is not enabled, so its memoization warnings about TanStack Virtual do not apply.
+      'react-hooks/incompatible-library': 'off',
     },
   },
   {

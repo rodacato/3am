@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import uPlot from 'uplot';
 import { clockLabel } from '../../engine/time';
+import { useLatest } from '../useLatest';
 
 export type ChartSeries = { label: string; values: (number | null)[] };
 export type Unit = 'seconds' | 'ratio' | 'rps' | 'percent' | 'bytes' | 'count';
@@ -38,10 +39,8 @@ export function formatValue(v: number, unit: Unit): string {
 export function TimeChart({ times, series, unit, height, revealUpTo, markers = [], onSelect }: Props) {
   const box = useRef<HTMLDivElement>(null);
   const plot = useRef<uPlot | null>(null);
-  const onSelectRef = useRef(onSelect);
-  onSelectRef.current = onSelect;
-  const markersRef = useRef(markers);
-  markersRef.current = markers;
+  const onSelectRef = useLatest(onSelect);
+  const markersRef = useLatest(markers);
 
   useEffect(() => {
     const el = box.current;

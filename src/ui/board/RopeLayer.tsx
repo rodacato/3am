@@ -1,5 +1,6 @@
 import { useEffect, useRef, type RefObject } from 'react';
 import { createRope, ropePath, staticRopePath, stepRope, type Point, type Rope } from './rope';
+import { useLatest } from '../useLatest';
 
 export type RopeLink = { key: string; from: string; to: string; state: 'open' | 'confirmed' | 'refuted' };
 
@@ -24,8 +25,7 @@ function paint(g: SVGGElement, d: string, opacity: number) {
 export function RopeLayer({ links, glassRef, rootRef, reducedMotion }: Props) {
   const ropes = useRef(new Map<string, Rope>());
   const groups = useRef(new Map<string, SVGGElement>());
-  const linksRef = useRef(links);
-  linksRef.current = links;
+  const linksRef = useLatest(links);
 
   useEffect(() => {
     let frame = 0;
@@ -66,7 +66,7 @@ export function RopeLayer({ links, glassRef, rootRef, reducedMotion }: Props) {
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [glassRef, rootRef, reducedMotion]);
+  }, [glassRef, rootRef, reducedMotion, linksRef]);
 
   return (
     <svg className="glass__ropes" aria-hidden="true">

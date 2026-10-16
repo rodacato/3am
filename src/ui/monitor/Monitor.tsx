@@ -7,6 +7,7 @@ import type { Session } from '../session/useCaseSession';
 import type { PinInput } from './pins';
 import { TimeChart } from './TimeChart';
 import { ChangesTool, DashboardsTool, LogsTool, MetricsTool, RunbooksTool, TracesTool, type RunResult } from './tools';
+import { useLatest } from '../useLatest';
 
 const TABS = ['dashboards', 'metrics', 'logs', 'traces', 'changes', 'runbooks', 'actions'] as const;
 type Tab = (typeof TABS)[number];
@@ -64,8 +65,7 @@ function WatchPanel({ session, reducedMotion, onWatchClock }: { session: Session
   const [view, setView] = useState<{ times: number[]; values: (number | null)[]; end: number; clearsAt: number | null } | null>(null);
   const [reveal, setReveal] = useState<number | null>(null);
   const sent = useRef(false);
-  const sessionRef = useRef(session);
-  sessionRef.current = session;
+  const sessionRef = useLatest(session);
 
   useEffect(() => {
     if (!pending) return;
@@ -80,7 +80,7 @@ function WatchPanel({ session, reducedMotion, onWatchClock }: { session: Session
       setView({ times: result.times, values: result.series[0]?.values ?? [], end, clearsAt });
     })();
     return () => { live = false; };
-  }, [pending]);
+  }, [pending, sessionRef]);
 
   useEffect(() => {
     if (!view || !pending) return;
@@ -91,9 +91,9 @@ function WatchPanel({ session, reducedMotion, onWatchClock }: { session: Session
       sessionRef.current.send({ type: 'MITIGATION_OBSERVED', clearsAt: view.clearsAt, watchedMin: view.clearsAt === null ? WATCH_FAIL_MIN : 0 });
     };
     if (reducedMotion) {
-      setReveal(view.end);
+      const shown = setTimeout(() => setReveal(view.end), 0);
       const id = setTimeout(finish, 1200);
-      return () => clearTimeout(id);
+      return () => { clearTimeout(shown); clearTimeout(id); };
     }
     const start = performance.now();
     const from = pending.startedAt;
@@ -108,7 +108,7 @@ function WatchPanel({ session, reducedMotion, onWatchClock }: { session: Session
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [view, pending, reducedMotion, onWatchClock]);
+  }, [view, pending, reducedMotion, onWatchClock, sessionRef]);
 
   if (!pending) return null;
   const done = view !== null && reveal === view.end;
@@ -164,8 +164,8 @@ export function Monitor({ session, vocabulary, pin, onFocus, reopen, reducedMoti
     const entry = session.context.queries.find((q) => q.id === reopen.id);
     if (!entry) return;
     const target = TAB_FOR_TOOL[entry.request.tool];
-    setTab(target);
     void session.reopenQuery(reopen.id).then((response) => {
+      setTab(target);
       if (response) setLast((prev) => ({ ...prev, [target]: { id: reopen.id, response } }));
     });
     // Only a new reopen request should trigger this, not every session update.
@@ -208,7 +208,7 @@ export function Monitor({ session, vocabulary, pin, onFocus, reopen, reducedMoti
               {tab === 'dashboards' && <DashboardsTool {...common} last={last.dashboards ?? null} {...draftFor('dashboards')} />}
               {tab === 'metrics' && <MetricsTool {...common} last={last.metrics ?? null} {...draftFor('metrics')} />}
               {tab === 'logs' && <LogsTool {...common} last={last.logs ?? null} {...draftFor('logs')} />}
-              {tab === 'traces' && <TracesTool {...common} last={last.traces ?? null} {...draftFor('traces')} onBack={() => setLast((p) => ({ ...p, traces: tracesList ?? undefined }))} />}
+              {tab === 'traces' && <TracesTool {...common} last={last.traces ?? null} list={tracesList} {...draftFor('traces')} onBack={() => setLast((p) => ({ ...p, traces: tracesList ?? undefined }))} />}
               {tab === 'changes' && <ChangesTool {...common} last={last.changes ?? null} {...draftFor('changes')} />}
               {tab === 'runbooks' && <RunbooksTool {...common} last={last.runbooks ?? null} {...draftFor('runbooks')} />}
               {tab === 'actions' && <ActionsTool session={session} />}

@@ -15,6 +15,7 @@ import { dawnProgress, skyGradient } from '../window/sky';
 import { Skyline } from '../window/Skyline';
 import { Phone } from './Phone';
 import { PrintTray } from './PrintTray';
+import { useLatest } from '../useLatest';
 
 export type Focus = 'window' | 'monitor' | 'phone';
 
@@ -46,23 +47,23 @@ export function Desk(props: Props) {
   const [watchClock, setWatchClock] = useState<number | null>(null);
   const [confirmReset, setConfirmReset] = useState(false);
   const previous = useRef(phase);
-  const onCompleted = useRef(props.onCompleted);
-  onCompleted.current = props.onCompleted;
+  const onCompleted = useLatest(props.onCompleted);
 
   useEffect(() => {
     const before = previous.current;
     previous.current = phase;
     if (phase === 'paged' && before !== 'paged') {
-      setFocus('phone');
+      const timer = setTimeout(() => setFocus('phone'), 0);
       if (sound) playPage();
+      return () => clearTimeout(timer);
     }
     if (before === 'paged' && phase === 'investigating') {
-      setFocus('monitor');
-      if (reducedMotion) { setLit('true'); return; }
-      setLit('flicker');
-      const a = setTimeout(() => setLit('false'), 90);
-      const b = setTimeout(() => setLit('true'), 260);
-      return () => { clearTimeout(a); clearTimeout(b); };
+      // The lamp hesitates once before it holds, unless motion is reduced.
+      const steps: [number, () => void][] = reducedMotion
+        ? [[0, () => { setFocus('monitor'); setLit('true'); }]]
+        : [[0, () => { setFocus('monitor'); setLit('flicker'); }], [90, () => setLit('false')], [260, () => setLit('true')]];
+      const timers = steps.map(([ms, fn]) => setTimeout(fn, ms));
+      return () => timers.forEach(clearTimeout);
     }
     if (phase === 'debrief' && before !== 'debrief') onCompleted.current();
     // Only phase transitions drive these effects; preferences are read at that moment.
