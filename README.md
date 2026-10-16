@@ -1,5 +1,11 @@
 # 3 AM
 
+[![CI · Test](https://github.com/rodacato/3am/actions/workflows/ci.yml/badge.svg)](https://github.com/rodacato/3am/actions/workflows/ci.yml)
+[![Site · Pages](https://github.com/rodacato/3am/actions/workflows/site-pages.yml/badge.svg)](https://github.com/rodacato/3am/actions/workflows/site-pages.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+**Play it in your browser: [rodacato.github.io/3am](https://rodacato.github.io/3am/)**
+
 An interactive course on incident response, played as night-shift cases. A page wakes you at 03:14. You investigate with simulated but realistic telemetry, tape evidence to the window and string it to hypotheses, mitigate while the clock runs and affected users climb, then write a blameless postmortem and see what was really going on.
 
 ![Case 01, from the page to the debrief](docs/media/case-01-demo.gif)
