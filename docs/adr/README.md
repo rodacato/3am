@@ -1,0 +1,14 @@
+# Architecture decision records
+
+- [0001 The window direction, with printed slips](0001-window-direction.md)
+- [0002 Cases are emulated in the browser](0002-cases-emulated-client-side.md)
+- [0003 One request simulator drives every signal](0003-one-request-simulator.md)
+- [0004 The clock moves only when the reader acts](0004-simulated-clock.md)
+- [0005 OpenTelemetry data model and OTLP export](0005-opentelemetry-shape-and-export.md)
+- [0006 Real PromQL, a documented subset, honest errors](0006-promql-subset.md)
+- [0007 Generation and search run in a Web Worker](0007-web-worker.md)
+- [0008 The incident lifecycle is an XState machine](0008-xstate-lifecycle.md)
+- [0009 Libraries and why](0009-libraries.md)
+- [0010 Versioned localStorage](0010-persistence.md)
+- [0011 Contributing factors, a fixed rubric, LLM only through the host](0011-contributing-factors-and-review.md)
+- [0012 Align with Dojo's scroll protocol](0012-dojo-integration.md)

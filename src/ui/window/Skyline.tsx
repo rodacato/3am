@@ -54,7 +54,8 @@ export function Skyline({ data, seed, pulse, dawn, reducedMotion }: Props) {
         })}
         {sky.buildings.map((b) => {
           const health = pulse?.components[b.id];
-          const unhappy = Math.min(0.75, ((health?.errorRatio ?? 0) + (health?.slowRatio ?? 0)) * 5);
+          // Below 1% unhappy requests a building looks normal; above that, red spreads fast.
+          const unhappy = Math.min(0.75, Math.max(0, (health?.errorRatio ?? 0) + (health?.slowRatio ?? 0) - 0.01) * 6);
           const lit = b.cells.filter((cell) => cell.lit);
           const redCount = Math.round(lit.length * unhappy);
           const redOrder = [...lit].sort((p, q) => p.order - q.order).slice(0, redCount);

@@ -35,7 +35,6 @@
     "@tanstack/react-virtual": "3.14.20",
     "@xstate/react": "6.1.0",
     "elkjs": "0.12.0",
-    "motion": "14.3.0",
     "pure-rand": "8.4.2",
     "react": "19.3.1",
     "react-dom": "19.3.1",
