@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3 AM · C · Window</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; height: 100%; background: #0B0E13; overflow: hidden; }
+  .stage { position: absolute; left: 0; top: 0; width: 1440px; height: 900px; transform-origin: 0 0; }
+  svg { display: block; }
+  .mono { font-family: 'IBM Plex Mono', monospace; }
+  .serif { font-family: 'Fraunces', serif; font-variation-settings: 'SOFT' 50, 'WONK' 0; }
+  .tag { position: absolute; right: 18px; bottom: 14px; font: 500 11px 'IBM Plex Mono', monospace; color: #6B7480; letter-spacing: .08em; }
+</style>
+</head>
+<body>
+<div class="stage"><svg id="scene" width="1440" height="900" viewBox="0 0 1440 900"></svg>
+<div class="tag">C · WINDOW — the skyline is the service map</div></div>
+<script src="common.js"></script>
+<script src="scene-window.js"></script>
+<script>
+document.getElementById('scene').innerHTML = AM.windowScene();
+AM.fit('.stage', 1440, 900);
+</script>
+</body>
+</html>

@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3 AM · A · Night desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; height: 100%; background: #0B0E13; overflow: hidden; }
+  .stage { position: absolute; left: 0; top: 0; width: 1440px; height: 900px; transform-origin: 0 0; }
+  svg { display: block; }
+  .mono { font-family: 'IBM Plex Mono', monospace; }
+  .serif { font-family: 'Fraunces', serif; font-variation-settings: 'SOFT' 50, 'WONK' 0; }
+  .tag { position: absolute; right: 18px; bottom: 14px; font: 500 11px 'IBM Plex Mono', monospace; color: #6B7480; letter-spacing: .08em; }
+</style>
+</head>
+<body>
+<div class="stage"><svg id="scene" width="1440" height="900" viewBox="0 0 1440 900"></svg>
+<div class="tag">A · NIGHT DESK — follows the brief</div></div>
+<script src="common.js"></script>
+<script>
+const { C, rng, f, esc, latency, flat, linePath, areaPath, rope, string, pin, card, defs } = AM;
+const W = 1440, H = 900;
+let s = defs();
+
+s += `<defs>
+  <linearGradient id="wall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#10141A"/><stop offset="1" stop-color="#171C24"/></linearGradient>
+  <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#121821"/><stop offset=".75" stop-color="#1B2330"/><stop offset="1" stop-color="#26303C"/></linearGradient>
+  <linearGradient id="desk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2A241E"/><stop offset="1" stop-color="#14120F"/></linearGradient>
+  <radialGradient id="dark" cx="930" cy="360" r="820" gradientUnits="userSpaceOnUse">
+    <stop offset="0" stop-color="#07090C" stop-opacity="0"/><stop offset=".32" stop-color="#07090C" stop-opacity=".08"/>
+    <stop offset=".62" stop-color="#07090C" stop-opacity=".55"/><stop offset="1" stop-color="#07090C" stop-opacity=".86"/></radialGradient>
+  <radialGradient id="warm" cx="930" cy="360" r="560" gradientUnits="userSpaceOnUse">
+    <stop offset="0" stop-color="#F2A541" stop-opacity=".16"/><stop offset=".6" stop-color="#F2A541" stop-opacity=".05"/><stop offset="1" stop-color="#F2A541" stop-opacity="0"/></radialGradient>
+  <clipPath id="win"><rect x="54" y="44" width="330" height="262"/></clipPath>
+  <clipPath id="screen"><rect x="482" y="262" width="370" height="290"/></clipPath>
+</defs>`;
+
+// Wall
+s += `<rect width="${W}" height="${H}" fill="url(#wall)"/><rect width="${W}" height="${H}" filter="url(#grain-dark)"/>`;
+
+// Window and the sleeping city
+s += `<rect x="46" y="36" width="346" height="278" fill="#0A0D11"/><g clip-path="url(#win)"><rect x="54" y="44" width="330" height="262" fill="url(#sky)"/>`;
+{
+  const r = rng(14);
+  let x = 50;
+  while (x < 390) {
+    const w = 18 + r() * 34, h = 40 + r() * 120, top = 306 - h;
+    s += `<rect x="${f(x)}" y="${f(top)}" width="${f(w)}" height="${f(h)}" fill="${r() > .5 ? '#0C1015' : '#0F141A'}"/>`;
+    for (let wy = top + 8; wy < 300; wy += 9) for (let wx = x + 4; wx < x + w - 4; wx += 7)
+      if (r() < 0.035) s += `<rect x="${f(wx)}" y="${f(wy)}" width="3" height="4" fill="${C.amber}" fill-opacity="${f(.35 + r() * .4)}"/>`;
+    x += w + r() * 4;
+  }
+  for (let i = 0; i < 9; i++) s += `<circle cx="${70 + i * 38}" cy="300" r="1.2" fill="#D9C79A" fill-opacity=".5"/>`;
+}
+s += `</g><rect x="217" y="44" width="5" height="262" fill="#0A0D11"/><rect x="54" y="172" width="330" height="5" fill="#0A0D11"/>
+<rect x="38" y="314" width="362" height="10" fill="#1B2028"/>`;
+
+// Evidence board on the wall
+s += `<rect x="896" y="36" width="514" height="530" fill="#0C0F14"/><rect x="904" y="44" width="498" height="514" fill="#1D232C"/>
+<rect x="904" y="44" width="498" height="514" filter="url(#grain-dark)"/>`;
+{
+  const r = rng(5);
+  for (let i = 0; i < 60; i++) s += `<circle cx="${f(910 + r() * 486)}" cy="${f(50 + r() * 500)}" r=".9" fill="#000" fill-opacity=".5"/>`;
+}
+
+// Evidence cards
+const pRange = latency({ seed: 3, n: 90 });
+const chartCard = (w, h) => {
+  const cx = 12, cy = 26, cw = w - 24, ch = h - 44;
+  const x0 = cx + (62 / 89) * cw;
+  return `<text x="12" y="17" class="mono" font-size="9" fill="${C.ink}" fill-opacity=".7">checkout-api · p99 · 02:00–03:29</text>
+    <rect x="${f(x0)}" y="${cy}" width="${f(cx + cw - x0)}" height="${ch}" fill="${C.amber}" fill-opacity=".28"/>
+    <line x1="${cx}" y1="${cy + ch}" x2="${cx + cw}" y2="${cy + ch}" stroke="${C.ink}" stroke-opacity=".3"/>
+    <path d="${linePath(pRange, cx, cy, cw, ch, { max: 4800 })}" fill="none" stroke="${C.ink}" stroke-width="1.4"/>
+    <text x="${f(x0 + 3)}" y="${cy + ch + 12}" class="mono" font-size="8.5" fill="${C.ink}">03:02 ↑ 4.3s</text>`;
+};
+s += card(926, 70, 220, 96, `
+  <text x="12" y="18" class="mono" font-size="9" font-weight="600" fill="${C.red}" letter-spacing=".08em">CHANGE · 02:57:41</text>
+  <text x="12" y="36" class="mono" font-size="10" fill="${C.ink}">config checkout-api v412 → v413</text>
+  <text x="12" y="56" class="mono" font-size="10.5" fill="${C.ink}">payment.retry.max_attempts</text>
+  <text x="12" y="74" class="mono" font-size="15" font-weight="600" fill="${C.ink}">1 → 5</text>
+  <text x="208" y="86" text-anchor="end" class="mono" font-size="8.5" fill="${C.ink}" fill-opacity=".55">deploy-bot · CHG-2291</text>`, { rot: -2.2 });
+s += card(920, 200, 236, 124, chartCard(236, 124), { rot: 1.6 });
+s += card(936, 362, 256, 72, `
+  <text x="12" y="18" class="mono" font-size="9" fill="${C.ink}" fill-opacity=".6">03:09:52.118  WARN  checkout-api</text>
+  <text x="12" y="38" class="mono" font-size="10.5" fill="${C.ink}">payment.authorize retry attempt=4/5</text>
+  <text x="12" y="56" class="mono" font-size="9.5" fill="${C.ink}" fill-opacity=".75">upstream=payment-gw elapsed_ms=811</text>`, { rot: -1.2 });
+const cpu = flat({ seed: 8, n: 90 });
+s += card(950, 468, 168, 70, `
+  <text x="10" y="16" class="mono" font-size="9" fill="${C.ink}" fill-opacity=".7">payments-db · cpu %</text>
+  <path d="${linePath(cpu, 10, 24, 148, 30, { min: 0, max: 100 })}" fill="none" stroke="${C.ink}" stroke-width="1.2"/>
+  <text x="158" y="62" text-anchor="end" class="mono" font-size="8.5" fill="${C.ink}" fill-opacity=".6">31% · flat</text>`, { rot: 2.4 });
+
+// Hypotheses: index cards, handwritten in Fraunces
+s += card(1188, 104, 200, 132, `
+  <rect x="0" y="0" width="200" height="4" fill="${C.red}"/>
+  <text x="14" y="24" class="mono" font-size="9" font-weight="600" fill="${C.red}" letter-spacing=".1em">H1 · 3 PIECES</text>
+  <text x="14" y="52" class="serif" font-size="19" font-weight="420" fill="${C.ink}">Retries piled up</text>
+  <text x="14" y="75" class="serif" font-size="19" font-weight="420" fill="${C.ink}">after the 02:57</text>
+  <text x="14" y="98" class="serif" font-size="19" font-weight="420" fill="${C.ink}">config push.</text>`, { rot: 1.2 });
+s += card(1214, 418, 180, 112, `
+  <text x="14" y="22" class="mono" font-size="9" font-weight="600" fill="${C.ink}" fill-opacity=".5" letter-spacing=".1em">H2 · 1 PIECE</text>
+  <text x="14" y="48" class="serif" font-size="18" font-weight="400" fill="${C.ink}" fill-opacity=".8">payments-db is</text>
+  <text x="14" y="70" class="serif" font-size="18" font-weight="400" fill="${C.ink}" fill-opacity=".8">overloaded.</text>
+  <text x="14" y="96" class="serif" font-style="italic" font-size="13" fill="${C.ink}" fill-opacity=".6">Alibi: CPU flat all night.</text>`, { rot: -3.5 });
+
+// Strings: three taut to H1, one slack to H2. Pins sit on card edges so thread never crosses text.
+const H1 = [1196, 168], H2 = [1222, 452];
+const E = [[1142, 92], [1152, 232], [1188, 384], [1112, 486]];
+s += string(rope(...E[0], ...H1, { slack: 1.004 }));
+s += string(rope(...E[1], ...H1, { slack: 1.004 }));
+s += string(rope(...E[2], ...H1, { slack: 1.006 }));
+s += string(rope(...E[3], ...H2, { slack: 1.12 }), { opacity: .85 });
+[...E, H1, H2].forEach(([x, y]) => s += pin(x, y));
+
+// Desk
+s += `<rect x="0" y="600" width="${W}" height="300" fill="url(#desk)"/><rect x="0" y="600" width="${W}" height="300" filter="url(#woodgrain)"/>
+<rect x="0" y="598" width="${W}" height="3" fill="#3A322A"/>`;
+
+// Lamp: base on the desk, two arm segments, shade aimed at the board
+s += `<g>
+  <ellipse cx="318" cy="620" rx="62" ry="12" fill="#0A0C10"/><ellipse cx="318" cy="615" rx="54" ry="9" fill="#232830"/>
+  <line x1="318" y1="612" x2="286" y2="372" stroke="#1E232B" stroke-width="9" stroke-linecap="round"/>
+  <line x1="286" y1="372" x2="430" y2="214" stroke="#1E232B" stroke-width="8" stroke-linecap="round"/>
+  <line x1="321" y1="606" x2="290" y2="376" stroke="#4A515C" stroke-width="1.4"/>
+  <line x1="290" y1="368" x2="432" y2="212" stroke="#4A515C" stroke-width="1.2"/>
+  <circle cx="286" cy="372" r="9" fill="#2A3039"/>
+  <g transform="rotate(-68 436 214)">
+    <path d="M410,190 L462,190 L498,252 L374,252 Z" fill="#20252D"/>
+    <path d="M410,190 L462,190 L466,197 L406,197 Z" fill="#3A414C"/>
+    <ellipse cx="436" cy="252" rx="62" ry="9" fill="${C.amber}" fill-opacity=".9"/>
+    <ellipse cx="436" cy="252" rx="40" ry="5" fill="#FFF1D6"/>
+  </g>
+</g>`;
+
+// Monitor
+s += `<rect x="636" y="560" width="62" height="40" fill="#1A1E25"/><path d="M600,606 L734,606 L726,596 L608,596 Z" fill="#22272F"/>
+<rect x="470" y="250" width="394" height="314" fill="#0D1015"/><rect x="482" y="262" width="370" height="290" fill="#10151C"/>`;
+s += `<g clip-path="url(#screen)">`;
+{
+  const tabs = ['METRICS', 'LOGS', 'TRACES', 'CHANGES', 'RUNBOOKS', 'MAP'];
+  let tx = 494;
+  tabs.forEach((t, i) => {
+    s += `<text x="${tx}" y="282" class="mono" font-size="9" font-weight="${i ? 400 : 600}" fill="${i ? C.fog : C.amber}" letter-spacing=".06em">${t}</text>`;
+    if (!i) s += `<rect x="${tx}" y="287" width="${t.length * 5.6}" height="1.5" fill="${C.amber}"/>`;
+    tx += t.length * 5.6 + 14;
+  });
+  s += `<text x="842" y="282" text-anchor="end" class="mono" font-size="9" fill="${C.paper}" fill-opacity=".8">03:29</text>`;
+  s += `<rect x="494" y="296" width="346" height="34" fill="#0B0F14" stroke="#262D37"/>
+    <text x="502" y="310" class="mono" font-size="8.6" fill="${C.paper}" fill-opacity=".85"><tspan fill="${C.amber}">histogram_quantile</tspan>(0.99, sum by (le) (rate(</text>
+    <text x="502" y="323" class="mono" font-size="8.6" fill="${C.paper}" fill-opacity=".85">  http_server_duration_seconds_bucket{<tspan fill="#C9B48A">service="checkout-api"</tspan>}[5m])))</text>`;
+  const cx = 512, cy = 346, cw = 320, ch = 112;
+  [0, 2, 4].forEach((v) => {
+    const y = cy + ch - (v / 4.8) * ch;
+    s += `<line x1="${cx}" y1="${f(y)}" x2="${cx + cw}" y2="${f(y)}" stroke="#262D37" stroke-dasharray="${v ? '2 4' : ''}"/>
+      <text x="${cx - 6}" y="${f(y + 3)}" text-anchor="end" class="mono" font-size="8" fill="${C.fog}">${v}s</text>`;
+  });
+  const vals = pRange.map((v) => v / 1000);
+  const x0 = cx + (62 / 89) * cw;
+  s += `<rect x="${f(x0)}" y="${cy}" width="${f(cx + cw - x0)}" height="${ch}" fill="${C.amber}" fill-opacity=".1"/>
+    <line x1="${f(x0)}" y1="${cy}" x2="${f(x0)}" y2="${cy + ch}" stroke="${C.amber}" stroke-opacity=".7"/>`;
+  s += `<path d="${areaPath(vals, cx, cy, cw, ch, { max: 4.8 })}" fill="${C.red}" fill-opacity=".08"/>
+    <path d="${linePath(vals, cx, cy, cw, ch, { max: 4.8 })}" fill="none" stroke="${C.red}" stroke-width="1.6"/>`;
+  ['02:00', '02:30', '03:00', '03:29'].forEach((t, i) => s += `<text x="${f(cx + (i / 3) * cw)}" y="${cy + ch + 13}" text-anchor="middle" class="mono" font-size="8" fill="${C.fog}">${t}</text>`);
+  s += `<text x="${f(x0 - 6)}" y="${cy + ch - 8}" text-anchor="end" class="mono" font-size="8.5" fill="${C.amber}">[ pin 03:02–03:29 ]</text>`;
+  const logs = [
+    ['03:28:41', 'WARN', 'payment.authorize retry attempt=3/5'],
+    ['03:28:42', 'WARN', 'payment.authorize retry attempt=4/5'],
+    ['03:28:44', 'ERROR', 'checkout timeout after 4012ms order=ord_88f1'],
+  ];
+  logs.forEach(([t, lv, m], i) => {
+    const y = 498 + i * 13;
+    s += `<text x="494" y="${y}" class="mono" font-size="8.5" fill="${C.fog}">${t}</text>
+      <text x="544" y="${y}" class="mono" font-size="8.5" fill="${lv === 'ERROR' ? C.red : C.paper}" fill-opacity="${lv === 'ERROR' ? 1 : .6}">${lv}</text>
+      <text x="584" y="${y}" class="mono" font-size="8.5" fill="${C.paper}" fill-opacity=".72">${m}</text>`;
+  });
+  s += `<text x="494" y="544" class="mono" font-size="8" fill="${C.fog}">this query cost 3 min · the clock is at 03:29</text>`;
+}
+s += `</g>`;
+
+// Sticky note on the bezel: the impact counter
+s += `<g transform="rotate(4 812 590)"><rect x="770" y="548" width="96" height="78" fill="#E8D9A8"/><rect x="770" y="548" width="96" height="78" filter="url(#grain)"/>
+  <text x="780" y="568" class="mono" font-size="8.5" fill="${C.ink}" fill-opacity=".7" letter-spacing=".06em">AFFECTED</text>
+  <text x="780" y="592" class="mono" font-size="19" font-weight="600" fill="${C.red}">1,240</text>
+  <text x="780" y="612" class="serif" font-style="italic" font-size="11.5" fill="${C.ink}">and climbing.</text></g>`;
+
+// Keyboard
+s += `<path d="M528,640 L812,640 L826,690 L514,690 Z" fill="#191D23"/>`;
+{
+  for (let row = 0; row < 4; row++) for (let k = 0; k < 18; k++) {
+    const y = 646 + row * 11, x = 532 + row * -3 + k * 16;
+    s += `<rect x="${x}" y="${y}" width="13" height="8" fill="#232831"/>`;
+  }
+}
+
+// Coffee, going cold
+s += `<g><ellipse cx="1012" cy="760" rx="46" ry="12" fill="#000" fill-opacity=".45"/>
+  <path d="M970,700 L974,756 Q1012,770 1050,756 L1054,700 Z" fill="#2A2F37"/><path d="M1054,712 q24,4 20,22 q-4,14 -22,12" fill="none" stroke="#2A2F37" stroke-width="7"/>
+  <ellipse cx="1012" cy="700" rx="42" ry="11" fill="#1C2026"/><ellipse cx="1012" cy="701" rx="36" ry="8.5" fill="#2E1E14"/>
+  <path d="M1002,690 q-8,-14 2,-26 q8,-10 -2,-22" fill="none" stroke="${C.fog}" stroke-opacity=".22" stroke-width="1.4"/>
+  <path d="M1020,688 q6,-12 -2,-22" fill="none" stroke="${C.fog}" stroke-opacity=".14" stroke-width="1.2"/></g>`;
+
+// Phone, face up, buzzing
+s += `<g transform="rotate(8 1240 755)">
+  <rect x="1168" y="636" width="146" height="244" rx="18" fill="#090B0E"/>
+  <rect x="1176" y="646" width="130" height="224" rx="12" fill="#151B24"/>
+  <text x="1241" y="704" text-anchor="middle" class="mono" font-size="38" font-weight="500" fill="${C.paper}">03:29</text>
+  <text x="1241" y="722" text-anchor="middle" class="mono" font-size="8.5" fill="${C.fog}">THU 15 OCT · +15 MIN</text>
+  <rect x="1184" y="738" width="114" height="92" rx="6" fill="#1F2630"/>
+  <rect x="1184" y="738" width="3" height="92" fill="${C.red}"/>
+  <text x="1194" y="754" class="mono" font-size="8" font-weight="600" fill="${C.red}" letter-spacing=".08em">PAGE · SEV-2 · 03:14</text>
+  <text x="1194" y="772" class="mono" font-size="9" fill="${C.paper}">checkout p99</text>
+  <text x="1194" y="785" class="mono" font-size="9" fill="${C.paper}">latency &gt; 4s</text>
+  <text x="1194" y="798" class="mono" font-size="9" fill="${C.paper}">for 5m</text>
+  <text x="1194" y="820" class="mono" font-size="8" fill="${C.fog}">acked 03:16 · you</text>
+</g>
+<g stroke="${C.amber}" stroke-opacity=".5" fill="none" stroke-width="1.4">
+  <path d="M1150,700 q-8,14 0,28"/><path d="M1138,694 q-12,20 0,40"/><path d="M1340,740 q8,14 0,28"/><path d="M1352,734 q12,20 0,40"/>
+</g>`;
+
+// Case folder in the dark
+s += `<g transform="rotate(-3 230 760)">
+  <path d="M70,650 L170,650 L184,636 L280,636 L294,650 L392,650 L392,870 L70,870 Z" fill="#CDBF9F"/>
+  <rect x="70" y="650" width="322" height="220" filter="url(#grain)"/>
+  <text x="196" y="648" class="mono" font-size="9" font-weight="600" fill="${C.ink}" letter-spacing=".12em">CASE 01</text>
+  <text x="92" y="700" class="serif" font-size="30" font-weight="500" fill="${C.ink}">The Quiet Push</text>
+  <text x="92" y="724" class="mono" font-size="9.5" fill="${C.ink}" fill-opacity=".7">MERCADITO · CHECKOUT &amp; PAYMENTS</text>
+  <text x="92" y="760" class="serif" font-style="italic" font-size="15" fill="${C.ink}" fill-opacity=".8">You are on call. It is a Thursday.</text>
+  <text x="92" y="782" class="serif" font-style="italic" font-size="15" fill="${C.ink}" fill-opacity=".8">Nobody else is awake.</text>
+  <line x1="92" y1="808" x2="370" y2="808" stroke="${C.red}" stroke-width="1.2"/>
+  <text x="92" y="830" class="mono" font-size="9" fill="${C.ink}" fill-opacity=".6">budget 90 min · 6 tools · 4 mitigations</text>
+</g>`;
+
+// Lamplight: everything outside the pool falls into shadow
+s += `<rect width="${W}" height="${H}" fill="url(#dark)"/><rect width="${W}" height="${H}" fill="url(#warm)" style="mix-blend-mode:screen"/>`;
+
+document.getElementById('scene').innerHTML = s;
+AM.fit('.stage', W, H);
+</script>
+</body>
+</html>

@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3 AM · Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; height: 100%; background: #0B0E13; overflow: hidden; }
+  .stage { position: absolute; left: 0; top: 0; width: 1440px; height: 900px; transform-origin: 0 0; }
+  svg { display: block; }
+  .mono { font-family: 'IBM Plex Mono', monospace; }
+  .serif { font-family: 'Fraunces', serif; font-variation-settings: 'SOFT' 50, 'WONK' 0; }
+  .err { opacity: 0; }
+  .replay { position: absolute; right: 18px; bottom: 12px; font: 500 11px 'IBM Plex Mono', monospace; color: #6B7480; background: none; border: 0; letter-spacing: .08em; cursor: pointer; }
+  .replay:hover, .replay:focus-visible { color: #F2A541; outline: none; }
+</style>
+</head>
+<body>
+<div class="stage"><svg id="scene" width="1440" height="900" viewBox="0 0 1440 900"></svg>
+<button class="replay" onclick="location.reload()">↻ REPLAY · 10 S</button></div>
+<script src="common.js"></script>
+<script src="scene-window.js"></script>
+<script>
+const { C, card, tape, pin, smooth, rng } = AM;
+const svg = document.getElementById('scene');
+const NS = 'http://www.w3.org/2000/svg';
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const params = new URLSearchParams(location.search);
+const frozenAt = params.has('t') ? Number(params.get('t')) : null;
+
+svg.innerHTML = AM.windowScene({ proto: true }) + `
+  <g id="live"></g>
+  <g id="newcard" opacity="0">${card(980, 64, 262, 70, `
+    <text x="12" y="18" class="mono" font-size="9" fill="${C.ink}" fill-opacity=".6">03:09:52.118  WARN  checkout-api</text>
+    <text x="12" y="38" class="mono" font-size="10.5" fill="${C.ink}">payment.authorize retry attempt=4/5</text>
+    <text x="12" y="56" class="mono" font-size="9.5" fill="${C.ink}" fill-opacity=".75">upstream=payment-gw elapsed_ms=811</text>`, { rot: 1.5 })}
+    <g id="newtape" opacity="0">${tape(1111, 64, 52, -2)}</g></g>
+  <g id="livepins"></g>
+  <rect width="1440" height="900" fill="url(#dark)"/>
+  <rect id="room" width="1440" height="900" fill="#05070A" opacity=".93"/>
+  <g id="phone" transform="rotate(-6 1180 810)">
+    <rect x="1050" y="740" width="260" height="130" rx="18" fill="#08090C"/>
+    <rect x="1060" y="750" width="240" height="110" rx="12" fill="#151B24"/>
+    <g id="phonescreen" opacity="0">
+      <rect x="1060" y="750" width="240" height="110" rx="12" fill="#1A2230"/>
+      <text x="1076" y="800" class="mono" font-size="36" font-weight="500" fill="${C.paper}">03:14</text>
+      <text x="1078" y="822" class="mono" font-size="8.5" fill="${C.fog}">THU 15 OCT · ON CALL</text>
+      <rect x="1206" y="764" width="3" height="80" fill="${C.red}"/>
+      <text x="1216" y="778" class="mono" font-size="8" font-weight="600" fill="${C.red}">PAGE · SEV-2</text>
+      <text x="1216" y="796" class="mono" font-size="8.5" fill="${C.paper}">checkout p99</text>
+      <text x="1216" y="810" class="mono" font-size="8.5" fill="${C.paper}">&gt; 4s for 5m</text>
+      <text x="1216" y="834" class="mono" font-size="8" fill="${C.fog}">tap to ack</text>
+    </g>
+  </g>
+  <g id="buzz" stroke="${C.amber}" fill="none" stroke-width="1.4" opacity="0">
+    <path d="M1036,770 q-8,14 0,28"/><path d="M1024,764 q-12,20 0,40"/><path d="M1324,760 q8,14 0,28"/><path d="M1336,754 q12,20 0,40"/>
+  </g>
+  <text id="caption" x="720" y="708" text-anchor="middle" class="serif" font-style="italic" font-size="17" fill="${C.paper}" opacity="0"></text>`;
+
+const $ = (id) => document.getElementById(id);
+const errs = [...svg.querySelectorAll('.err')];
+const errDelay = (() => { const r = rng(77); return errs.map(() => r()); })();
+
+// A rope integrated live: verlet points, distance constraints, either end can be released.
+function makeRope(a, b, slack, n = 22) {
+  const pts = [], prev = [];
+  const sag = Math.hypot(b[0] - a[0], b[1] - a[1]) * Math.sqrt(Math.max(0, slack * slack - 1)) * 0.5;
+  for (let i = 0; i < n; i++) {
+    const t = i / (n - 1), y = a[1] + (b[1] - a[1]) * t + Math.sin(Math.PI * t) * sag;
+    pts.push([a[0] + (b[0] - a[0]) * t, y]); prev.push([a[0] + (b[0] - a[0]) * t, y]);
+  }
+  const g = document.createElementNS(NS, 'g');
+  $('live').appendChild(g);
+  return { pts, prev, n, a, b, slack, pinA: true, pinB: true, g, base: Math.hypot(b[0] - a[0], b[1] - a[1]) };
+}
+function stepRope(r, gravity = 0.45) {
+  const seg = (r.base * r.slack) / (r.n - 1);
+  for (let i = 0; i < r.n; i++) {
+    if ((i === 0 && r.pinA) || (i === r.n - 1 && r.pinB)) continue;
+    const p = r.pts[i], q = r.prev[i];
+    const vx = (p[0] - q[0]) * 0.94, vy = (p[1] - q[1]) * 0.94;
+    r.prev[i] = [p[0], p[1]];
+    p[0] += vx; p[1] += vy + gravity;
+  }
+  for (let k = 0; k < 18; k++) {
+    if (r.pinA) r.pts[0] = [...r.a];
+    if (r.pinB) r.pts[r.n - 1] = [...r.b];
+    for (let i = 0; i < r.n - 1; i++) {
+      const a = r.pts[i], b = r.pts[i + 1];
+      const dx = b[0] - a[0], dy = b[1] - a[1], d = Math.hypot(dx, dy) || 1e-6;
+      const diff = (d - seg) / d;
+      const fa = i === 0 && r.pinA ? 0 : (i + 1 === r.n - 1 && r.pinB ? 1 : 0.5);
+      const fb = i + 1 === r.n - 1 && r.pinB ? 0 : (i === 0 && r.pinA ? 1 : 0.5);
+      a[0] += dx * diff * fa; a[1] += dy * diff * fa;
+      b[0] -= dx * diff * fb; b[1] -= dy * diff * fb;
+    }
+  }
+}
+function drawRope(r, opacity = 1) {
+  r.g.innerHTML = AM.string(smooth(r.pts), { opacity });
+}
+
+const ck = [608, 326], db = [885, 566];
+const ropes = {
+  alibi: makeRope([1148, 270], [1194, 250], 1.12),
+  h2db: makeRope([1240, 298], db, 1.16),
+  e3: null,
+};
+for (let i = 0; i < 200; i++) { stepRope(ropes.alibi); stepRope(ropes.h2db); }
+
+const pins = (list) => { $('livepins').innerHTML = list.map(([x, y]) => pin(x, y, { r: 4.5 })).join(''); };
+
+// Timeline in ms; each beat is a pure function of t so any frame can be rendered directly.
+const ease = (x) => (x < 0 ? 0 : x > 1 ? 1 : x * x * (3 - 2 * x));
+const span = (t, a, b) => ease((t - a) / (b - a));
+const captions = [
+  [500, 3600, '03:14. Checkout is slow. Again.'],
+  [5000, 8200, 'Pinned: payment.authorize, retried four times.'],
+  [8700, 99999, 'Hypothesis dropped. The database has an alibi.'],
+];
+
+let released = false, lastStep = 0;
+function frame(t) {
+  // Phone wakes and buzzes twice
+  $('phonescreen').setAttribute('opacity', t > 300 ? 1 : 0);
+  const buzzing = (t > 300 && t < 1400) || (t > 1800 && t < 2700);
+  const jx = buzzing ? Math.sin(t / 11) * 1.6 : 0;
+  $('phone').setAttribute('transform', `translate(${jx},0) rotate(-6 1180 810)`);
+  $('buzz').setAttribute('opacity', buzzing ? 0.55 + 0.3 * Math.sin(t / 40) : 0);
+
+  // The lamp: one hesitant flicker, then steady light
+  let room = 0.93;
+  if (t > 2900) room = t < 2980 ? 0.62 : t < 3060 ? 0.86 : 0.86 - 0.86 * span(t, 3060, 4100);
+  $('room').setAttribute('opacity', room.toFixed(3));
+
+  // The checkout tower starts failing, floor by floor
+  errs.forEach((el, i) => el.style.opacity = span(t, 3900 + errDelay[i] * 1200, 4300 + errDelay[i] * 1200));
+
+  // The log note leaves the laptop and lands on the glass
+  const k = span(t, 5000, 6200);
+  const cx = 1111, cy = 99;
+  const dx = (250 - cx) * (1 - k), dy = (800 - cy) * (1 - k) - Math.sin(k * Math.PI) * 60;
+  const sc = 0.35 + 0.65 * k, rot = -14 * (1 - k);
+  $('newcard').setAttribute('opacity', t > 5000 ? Math.min(1, (t - 5000) / 200) : 0);
+  $('newcard').setAttribute('transform', `translate(${cx + dx},${cy + dy}) scale(${sc}) rotate(${rot}) translate(${-cx},${-cy})`);
+  $('newtape').setAttribute('opacity', span(t, 6200, 6450));
+
+  // Its string appears slack, then tightens when the evidence is tied to H1
+  if (t > 6300 && !ropes.e3) { ropes.e3 = makeRope([980, 100], [794, 110], 1.32); }
+  if (ropes.e3) ropes.e3.slack = 1.32 - 0.317 * span(t, 6900, 8000);
+  if (t > 8600 && !released) { released = true; ropes.h2db.pinA = false; }
+
+  const steps = Math.min(8, Math.max(1, Math.round((t - lastStep) / 16)));
+  lastStep = t;
+  for (let i = 0; i < steps; i++) { ['alibi', 'h2db', 'e3'].forEach((n) => ropes[n] && stepRope(ropes[n])); }
+  drawRope(ropes.alibi, 0.85);
+  drawRope(ropes.h2db, released ? Math.max(0, 0.85 - (t - 8600) / 1300) : 0.85);
+  if (ropes.e3) drawRope(ropes.e3);
+
+  const h2 = $('h2');
+  if (h2) {
+    // One tape corner lets go: the card sags and fades back into the dark.
+    const d = span(t, 8700, 9600);
+    h2.style.opacity = 1 - 0.45 * d;
+    h2.setAttribute('transform', `translate(${-4 * d},${12 * d}) rotate(${2.5 - 5 * d} 1288 238)`);
+  }
+  pins([[1148, 270], [1194, 250], ...(released ? [] : [[1240, 298]]), db, ...(ropes.e3 ? [[980, 100], [794, 110]] : [])]);
+
+  const cap = captions.find(([a, b]) => t >= a && t < b);
+  const c = $('caption');
+  if (cap) { c.textContent = cap[2]; c.setAttribute('opacity', Math.min(span(t, cap[0], cap[0] + 400), 1 - span(t, cap[1] - 300, cap[1])) * 0.8); }
+  else c.setAttribute('opacity', 0);
+}
+
+AM.fit('.stage', 1440, 900);
+if (reduced || frozenAt !== null) {
+  // No motion: render the settled end state (or a requested instant) by stepping the clock silently.
+  const end = reduced ? 10000 : frozenAt;
+  for (let t = 0; t <= end; t += 16) frame(t);
+} else {
+  document.fonts.ready.then(() => {
+    const t0 = performance.now();
+    const loop = (now) => { const t = now - t0; frame(t); if (t < 10500) requestAnimationFrame(loop); };
+    requestAnimationFrame(loop);
+  });
+}
+</script>
+</body>
+</html>
