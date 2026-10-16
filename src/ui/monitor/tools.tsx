@@ -9,7 +9,7 @@ import type { MetricVocabulary } from '../../telemetry/source';
 import type { Session } from '../session/useCaseSession';
 import { changePin, describeChange, labelText, logPin, metricPin, runbookPin, spanPin, type PinInput, type PinSource } from './pins';
 import { PromQLEditor } from './PromQLEditor';
-import { TimeChart, type Unit } from './TimeChart';
+import { formatValue, seriesColor, TimeChart, type Unit } from './TimeChart';
 
 export type RunResult = { id: number; response: ToolResponse };
 
@@ -52,11 +52,28 @@ function seriesFor(result: { labels: Readonly<Record<string, string>>; values: (
   return result.map((s) => ({ label: labelText(s.labels) || fallback, values: s.values }));
 }
 
-function MetricsPanel({ title, unit, panel, height, onPin }: { title: string; unit: Unit; panel: { query: string; result: { times: number[]; series: { labels: Readonly<Record<string, string>>; values: (number | null)[] }[] } }; height: number; onPin: (from: number, to: number) => void }) {
+function MetricsPanel({ title, unit, panel, height, onPin, compact = false }: { title: string; unit: Unit; panel: { query: string; result: { times: number[]; series: { labels: Readonly<Record<string, string>>; values: (number | null)[] }[] } }; height: number; onPin: (from: number, to: number) => void; compact?: boolean }) {
   const { t } = useI18n();
   const series = useMemo(() => seriesFor(panel.result.series, title), [panel, title]);
   if (!series.length) return <div className="hint">{t('metrics.noSeries')}</div>;
-  return <TimeChart times={panel.result.times} series={series} unit={unit} height={height} onSelect={onPin} />;
+  return <TimeChart times={panel.result.times} series={series} unit={unit} height={height} onSelect={onPin} compact={compact} />;
+}
+
+// The latest value of each series, the number a tired eye looks for first.
+function NowValues({ panel, unit, title }: { panel: { result: { series: { labels: Readonly<Record<string, string>>; values: (number | null)[] }[] } }; unit: Unit; title: string }) {
+  return (
+    <div className="now-values">
+      {panel.result.series.map((s) => {
+        const last = [...s.values].reverse().find((v) => v !== null);
+        const label = labelText(s.labels) || title;
+        return (
+          <span key={label} style={{ ['--c' as string]: seriesColor(label, panel.result.series.indexOf(s)).stroke }}>
+            <strong>{last === undefined || last === null ? '—' : formatValue(last, unit)}</strong> {panel.result.series.length > 1 ? label.replace(/^\w+=/, '') : ''}
+          </span>
+        );
+      })}
+    </div>
+  );
 }
 
 function guessUnit(query: string): Unit {
@@ -115,16 +132,29 @@ export function DashboardsTool({ session, run, busy, last, pin, openInMetrics }:
         const data = r.data;
         const dashboard = dashboards.find((d) => d.id === data.dashboard);
         return (
-          <div className="scroll" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '10px 18px', alignContent: 'start' }}>
+          <div className="scroll">
             {data.panels.map((p, i) => {
               const def = dashboard?.panels[i];
               if (!def) return null;
               const title = t(`case.${def.titleKey}`);
+              const onPin = (from: number, to: number) => { if (!('error' in p)) pin(metricPin(p, from, to, def.unit, title, sourceOf(session, last, 'dashboard'))); };
+              const edit = <button className="link link--quiet" onClick={() => openInMetrics(def.query)}>{t('dashboard.edit')}</button>;
+              if (i === 0) {
+                return (
+                  <div key={i} style={{ marginBottom: 8 }}>
+                    <div className="result-head"><strong>{title}</strong>{edit}</div>
+                    {'error' in p ? <ErrorLine error={p.error} /> : <MetricsPanel title={title} unit={def.unit} panel={p} height={150} onPin={onPin} />}
+                  </div>
+                );
+              }
               return (
-                <div key={i} style={{ gridColumn: i === 0 ? '1 / -1' : undefined }}>
-                  <div className="result-head"><strong>{title}</strong><button className="link link--quiet" onClick={() => openInMetrics(def.query)}>{t('dashboard.edit')}</button></div>
+                <div key={i} className="dash-row">
+                  <span className="dash-row__title">{title}<br />{edit}</span>
                   {'error' in p ? <ErrorLine error={p.error} /> : (
-                    <MetricsPanel title={title} unit={def.unit} panel={p} height={i === 0 ? 150 : 96} onPin={(from, to) => pin(metricPin(p, from, to, def.unit, title, sourceOf(session, last, 'dashboard')))} />
+                    <>
+                      <MetricsPanel title={title} unit={def.unit} panel={p} height={44} onPin={onPin} compact />
+                      <NowValues panel={p} unit={def.unit} title={title} />
+                    </>
                   )}
                 </div>
               );

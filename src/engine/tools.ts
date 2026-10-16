@@ -8,6 +8,7 @@ import type { LogRecord, Span } from '../telemetry/otel';
 import { metricSource } from '../telemetry/source';
 import { searchTraces, traceByRef, type TraceSummary } from '../telemetry/traces';
 import type { Change, ToolName } from './case-schema';
+import { timedChanges } from './jitter';
 import type { Scenario } from './state';
 
 export const DEFAULT_WINDOW_MIN = 90;
@@ -162,7 +163,7 @@ export function runTool(s: Scenario, now: number, request: ToolRequest): ToolRes
         return done({ tool: 'trace', ref: request.ref, spans });
       }
       case 'changes':
-        return done({ tool: 'changes', changes: s.data.changes.filter((c) => c.at <= now).sort((a, b) => b.at - a.at) });
+        return done({ tool: 'changes', changes: timedChanges(s).filter((c) => c.at <= now).sort((a, b) => b.at - a.at) });
       case 'runbook':
         return done({ tool: 'runbook', runbook: request.runbook });
       case 'map':

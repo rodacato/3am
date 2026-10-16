@@ -44,8 +44,8 @@ export const case01: CaseInput = {
   ],
   config: { 'checkout-api': { 'payment.client.timeout_ms': 800, 'payment.client.max_attempts': 2 } },
   changes: [
-    { kind: 'deploy', id: 'deploy-cart-381', at: at(1, 12), component: 'cart-api', version: '3.8.1', author: 'ci-bot', messageKey: 'change.deployCart' },
-    { kind: 'flag', id: 'flag-promo-banner', at: at(2, 4), flag: 'storefront.promo-banner', from: false, to: true, author: 'm.santos', messageKey: 'change.promoFlag' },
+    { kind: 'deploy', id: 'deploy-cart-381', at: at(1, 12), component: 'cart-api', version: '3.8.1', author: 'ci-bot', messageKey: 'change.deployCart', jitterMin: 40 },
+    { kind: 'flag', id: 'flag-promo-banner', at: at(2, 4), flag: 'storefront.promo-banner', from: false, to: true, author: 'm.santos', messageKey: 'change.promoFlag', jitterMin: 25 },
     {
       kind: 'config', id: 'cfg-413', at: at(3, 3), component: 'checkout-api', key: 'payment.client.timeout_ms',
       from: 800, to: 8000, version: 'v413', author: 'r.ibarra', ticket: 'CHG-2291', messageKey: 'change.timeout',
@@ -53,7 +53,7 @@ export const case01: CaseInput = {
   ],
   effects: [
     { id: 'gw-settlement-window', component: 'payment-gw', param: 'tail.ratio', op: 'set', value: 0.07, from: at(2, 30), until: at(5, 0), rampMin: 15 },
-    { id: 'orders-archive-cron', component: 'payments-db', param: 'cpu', op: 'add', value: 0.24, from: at(3, 20), until: at(3, 34), rampMin: 2 },
+    { id: 'orders-archive-cron', component: 'payments-db', param: 'cpu', op: 'add', value: 0.24, from: at(3, 20), until: at(3, 34), rampMin: 2, jitterMin: 12 },
   ],
   logs: [
     {
@@ -80,8 +80,8 @@ export const case01: CaseInput = {
     { id: 'storefront.health', component: 'storefront', severity: 'DEBUG', body: 'GET /healthz 200 in {int:1-4}ms', trigger: { kind: 'rate', perMin: 6 } },
     { id: 'cart.cache-ratio', component: 'cart-api', severity: 'INFO', body: 'cart cache hit ratio {int:93-97}% over last 60s', trigger: { kind: 'rate', perMin: 1 } },
     { id: 'cache.evictions', component: 'cart-cache', severity: 'WARN', body: 'evicted {int:120-480} keys (maxmemory-policy allkeys-lru)', trigger: { kind: 'rate', perMin: 0.4 } },
-    { id: 'db.archive-batch', component: 'payments-db', severity: 'INFO', body: 'orders-archive: moved {int:9000-14000} rows to orders_archive', trigger: { kind: 'rate', perMin: 2, from: at(3, 20), until: at(3, 34) } },
-    { id: 'db.slow-query', component: 'payments-db', severity: 'WARN', body: 'slow query {int:240-520}ms: INSERT INTO orders_archive SELECT ... WHERE created_at < now() - interval 90 day', trigger: { kind: 'rate', perMin: 1.5, from: at(3, 20), until: at(3, 34) } },
+    { id: 'db.archive-batch', component: 'payments-db', severity: 'INFO', body: 'orders-archive: moved {int:9000-14000} rows to orders_archive', trigger: { kind: 'rate', perMin: 2, from: at(3, 20), until: at(3, 34), followsEffect: 'orders-archive-cron' } },
+    { id: 'db.slow-query', component: 'payments-db', severity: 'WARN', body: 'slow query {int:240-520}ms: INSERT INTO orders_archive SELECT ... WHERE created_at < now() - interval 90 day', trigger: { kind: 'rate', perMin: 1.5, from: at(3, 20), until: at(3, 34), followsEffect: 'orders-archive-cron' } },
   ],
   alert: {
     id: 'checkout-p99-latency',

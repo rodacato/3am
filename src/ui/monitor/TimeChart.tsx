@@ -14,6 +14,7 @@ type Props = {
   revealUpTo?: number;
   markers?: { minute: number; color: string }[];
   onSelect?: (fromMinute: number, toMinute: number) => void;
+  compact?: boolean;
 };
 
 const AXIS = { stroke: '#6B7480', font: '10px "IBM Plex Mono"', grid: { stroke: '#262D37', width: 1, dash: [2, 4] }, ticks: { show: false } };
@@ -36,7 +37,7 @@ export function formatValue(v: number, unit: Unit): string {
   }
 }
 
-export function TimeChart({ times, series, unit, height, revealUpTo, markers = [], onSelect }: Props) {
+export function TimeChart({ times, series, unit, height, revealUpTo, markers = [], onSelect, compact = false }: Props) {
   const box = useRef<HTMLDivElement>(null);
   const plot = useRef<uPlot | null>(null);
   const onSelectRef = useLatest(onSelect);
@@ -51,10 +52,13 @@ export function TimeChart({ times, series, unit, height, revealUpTo, markers = [
       legend: { show: false },
       cursor: { drag: { x: Boolean(onSelectRef.current), y: false, setScale: false }, points: { show: false } },
       scales: { x: { time: false }, y: { range: (_u, min, max) => [Math.min(0, min), max <= 0 ? 1 : max * 1.12] } },
-      axes: [
-        { ...AXIS, values: (_u, splits) => splits.map((s) => clockLabel(Math.round(s))), space: 70 },
-        { ...AXIS, values: (_u, splits) => splits.map((s) => formatValue(s, unit)), size: 52 },
-      ],
+      axes: compact
+        ? [{ show: false }, { show: false }]
+        : [
+          { ...AXIS, values: (_u, splits) => splits.map((s) => clockLabel(Math.round(s))), space: 70 },
+          { ...AXIS, values: (_u, splits) => splits.map((s) => formatValue(s, unit)), size: 52 },
+        ],
+      padding: compact ? [4, 0, 4, 0] : undefined,
       series: [{}, ...series.map((s, i) => ({ label: s.label, ...seriesColor(s.label, i), width: 1.6, points: { show: false }, spanGaps: false }))],
       hooks: {
         setSelect: [(u) => {
@@ -91,7 +95,7 @@ export function TimeChart({ times, series, unit, height, revealUpTo, markers = [
     };
     // The plot is rebuilt only when the shape of the data changes; values flow through setData below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [series.length, series.map((s) => s.label).join('|'), unit, height]);
+  }, [series.length, series.map((s) => s.label).join('|'), unit, height, compact]);
 
   useEffect(() => {
     const u = plot.current;
@@ -105,7 +109,7 @@ export function TimeChart({ times, series, unit, height, revealUpTo, markers = [
   return (
     <div className="chart">
       <div ref={box} />
-      {series.length > 1 && (
+      {series.length > 1 && !compact && (
         <div className="chart__legend">
           {series.map((s, i) => <span key={s.label} style={{ ['--c' as string]: seriesColor(s.label, i).stroke }}>{s.label}</span>)}
         </div>

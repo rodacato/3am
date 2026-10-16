@@ -25,7 +25,7 @@ export function Skyline({ data, seed, pulse, dawn, reducedMotion }: Props) {
   const lightFade = Math.max(0.15, 1 - dawn * 0.7);
 
   return (
-    <div ref={ref} className="skyline-box" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '62%' }}>
+    <div ref={ref} className="skyline-box" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '58%' }}>
       <svg className="skyline" width={size.w} height={size.h} viewBox={`0 0 ${size.w} ${size.h}`} aria-hidden="true">
         {sky.haze.map((h, i) => (
           <rect key={i} x={h.x} y={sky.ground - h.h - size.h * 0.22} width={h.w} height={h.h + size.h * 0.22} fill="#1A222C" opacity={0.9 - dawn * 0.25} />
@@ -84,14 +84,21 @@ export function Skyline({ data, seed, pulse, dawn, reducedMotion }: Props) {
                   style={{ transition: reducedMotion ? undefined : `fill 900ms ${Math.round(cell.order * 900)}ms, opacity 900ms` }}
                 />
               ))}
-              <text x={roofX} y={b.y - (b.kind === 'cache' ? 58 : 10)} textAnchor="middle" className="mono" fontSize={b.far ? 9.5 : 10.5} fill="#E8E2D6" fillOpacity={b.far ? 0.5 : 0.78} letterSpacing="0.04em">
-                {b.id}
-              </text>
               <rect data-anchor={`bldg-${b.id}`} x={roofX} y={b.y - 2} width={1} height={1} fill="none" />
             </g>
           );
         })}
       </svg>
+      {sky.buildings.map((b) => (
+        <span
+          key={b.id}
+          className="bldg-label"
+          data-far={b.far}
+          style={{ left: b.x + b.w / 2, top: b.y - (b.kind === 'cache' ? 54 : 6) }}
+        >
+          {b.id}
+        </span>
+      ))}
     </div>
   );
 }

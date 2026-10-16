@@ -228,5 +228,7 @@
   "source.how-complex-systems-fail.note": "Eighteen short observations. Number 3 is this case.",
   "debrief.takeHome": "Take the case home",
   "debrief.takeHomeHint": "Download this night's traces, logs and metrics as OTLP JSON, ready for Jaeger, Grafana or an OpenTelemetry Collector.",
-  "debrief.packing": "Packing the evidence…"
+  "debrief.packing": "Packing the evidence…",
+  "debrief.path.status": "Status update sent.",
+  "debrief.unanswered": "{from} asked at {clock} and never heard back. Silence reads as \"nobody's on it\"."
 }

@@ -3,6 +3,7 @@ import { createActor } from 'xstate';
 import { validateCase, type CaseData } from '../src/engine/case-schema';
 import { incidentMachine, type IncidentInput } from '../src/engine/incident-machine';
 import { checkSolvable } from '../src/engine/solvability';
+import { effectWindow, timedChanges } from '../src/engine/jitter';
 import { aggregateMinute } from '../src/telemetry/requests';
 import { isAlertFiring, observeMitigation, runTool } from '../src/engine/tools';
 import case01Input from '../src/content/cases/case-01/case';
@@ -33,6 +34,36 @@ describe('solvability', () => {
       const report = checkSolvable(data, seed);
       expect(report.problems).toEqual([]);
     }
+  });
+});
+
+describe('seeded red herrings', () => {
+  it('moves red herrings with the seed and never moves evidence', () => {
+    const cron = case01.effects.find((e) => e.id === 'orders-archive-cron');
+    if (!cron) throw new Error('case-01 should have the archive cron');
+    const starts = new Set([1, 2, 3, 4, 5, 6].map((seed) => effectWindow(scenario(case01, seed), cron).from));
+    expect(starts.size).toBeGreaterThan(2);
+    for (const seed of [1, 2, 3, 4, 5, 6]) {
+      const change = timedChanges(scenario(case01, seed)).find((c) => c.id === 'cfg-413');
+      expect(change?.at).toBe(case01.changes.find((c) => c.id === 'cfg-413')?.at);
+      const window = effectWindow(scenario(case01, seed), cron);
+      expect(window.until! - window.from).toBe(cron.until! - cron.from);
+    }
+  });
+
+  it('keeps logs that follow a red herring inside its moved window', async () => {
+    const { logsInMinute } = await import('../src/telemetry/logs');
+    const cron = case01.effects.find((e) => e.id === 'orders-archive-cron')!;
+    const s = scenario(case01, 4);
+    const { from, until } = effectWindow(s, cron);
+    expect(logsInMinute(s, from).some((r) => r.templateId === 'db.archive-batch' || r.templateId === 'db.slow-query') || logsInMinute(s, from + 1).some((r) => r.templateId === 'db.archive-batch')).toBe(true);
+    expect(logsInMinute(s, until!).some((r) => r.templateId.startsWith('db.'))).toBe(false);
+  });
+
+  it('refuses a case that jitters a change its factors depend on', () => {
+    const broken = structuredClone(case01Input);
+    broken.changes = broken.changes?.map((c) => (c.id === 'cfg-413' ? { ...c, jitterMin: 5 } : c));
+    expect(() => validateCase(broken)).toThrow(/must not jitter/);
   });
 });
 

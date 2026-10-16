@@ -41,13 +41,16 @@ export const trafficSchema = z.object({
 
 const configValue = z.union([z.number(), z.string(), z.boolean()]);
 
+// jitterMin lets the seed move a red herring in time, so a replay is a different night, not the same one.
+const jitterMin = z.number().int().min(0).default(0);
+
 export const changeSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('config'), id, at: minute, component: id, key: z.string(),
-    from: configValue, to: configValue, version: z.string(), author: z.string(), ticket: z.string().optional(), messageKey: textKey,
+    from: configValue, to: configValue, version: z.string(), author: z.string(), ticket: z.string().optional(), messageKey: textKey, jitterMin,
   }),
-  z.object({ kind: z.literal('deploy'), id, at: minute, component: id, version: z.string(), author: z.string(), messageKey: textKey }),
-  z.object({ kind: z.literal('flag'), id, at: minute, flag: z.string(), from: z.boolean(), to: z.boolean(), author: z.string(), messageKey: textKey }),
+  z.object({ kind: z.literal('deploy'), id, at: minute, component: id, version: z.string(), author: z.string(), messageKey: textKey, jitterMin }),
+  z.object({ kind: z.literal('flag'), id, at: minute, flag: z.string(), from: z.boolean(), to: z.boolean(), author: z.string(), messageKey: textKey, jitterMin }),
 ]);
 
 export const effectParam = z.enum(['latency.medianMs', 'tail.ratio', 'tail.medianMs', 'errorRatio', 'cpu', 'memoryMb', 'traffic']);
@@ -62,6 +65,7 @@ export const effectSchema = z.object({
   until: minute.optional(),
   rampMin: z.number().min(0).default(0),
   growthPerMin: z.number().default(0),
+  jitterMin,
   resetBy: z.array(id).default([]),
   removedBy: z.array(id).default([]),
 });
@@ -87,7 +91,7 @@ export const logTemplateSchema = z.object({
   severity,
   body: z.string(),
   trigger: z.discriminatedUnion('kind', [
-    z.object({ kind: z.literal('rate'), perMin: z.number().min(0), from: minute.optional(), until: minute.optional() }),
+    z.object({ kind: z.literal('rate'), perMin: z.number().min(0), from: minute.optional(), until: minute.optional(), followsEffect: id.optional() }),
     z.object({ kind: z.literal('attemptTimeout'), call: id }),
     z.object({ kind: z.literal('retry'), call: id }),
     z.object({ kind: z.literal('serverError') }),
@@ -198,6 +202,7 @@ export function validateCase(input: CaseInput): CaseData {
   data.logs.forEach((l) => {
     need(components.has(l.component), `log ${l.id} names unknown ${l.component}`);
     if ('call' in l.trigger) need(calls.has(l.trigger.call), `log ${l.id} names unknown call ${l.trigger.call}`);
+    if (l.trigger.kind === 'rate' && l.trigger.followsEffect) need(data.effects.some((e) => e.id === (l.trigger as { followsEffect?: string }).followsEffect), `log ${l.id} follows unknown effect`);
   });
   data.mitigations.forEach((m) => m.actions.forEach((a) => {
     if (a.type === 'revertChange') need(changes.has(a.change), `mitigation ${m.id} reverts unknown ${a.change}`);
@@ -207,6 +212,8 @@ export function validateCase(input: CaseInput): CaseData {
   data.causalChain.nodes.forEach((n) => { if (n.factor) need(factors.has(n.factor), `node ${n.id} names unknown factor ${n.factor}`); });
   need(mitigations.has(data.solution.mitigation), `solution mitigation ${data.solution.mitigation} is unknown`);
   need(data.page.at > data.historyFrom, 'the page must come after the start of history');
+  const evidence = new Set(data.factors.flatMap((f) => f.requiredEvidence.flat()));
+  data.changes.forEach((c) => need(!(c.jitterMin > 0 && evidence.has(`change:${c.id}`)), `change ${c.id} is evidence and must not jitter`));
 
   if (problems.length) throw new Error(`Case ${data.id} is invalid:\n- ${problems.join('\n- ')}`);
   return data;

@@ -13,7 +13,7 @@ export type BoardAction =
 // Slots on the glass, in board fractions: evidence fills the left panes, hypotheses the right.
 const PIN_SLOTS: [number, number][] = [];
 for (let row = 0; row < 3; row++) for (let col = 0; col < 4; col++) PIN_SLOTS.push([0.015 + col * 0.158 + (row % 2) * 0.03, 0.05 + row * 0.24]);
-const HYPOTHESIS_SLOTS: [number, number][] = [[0.68, 0.06], [0.68, 0.42], [0.8, 0.24], [0.8, 0.6]];
+const HYPOTHESIS_SLOTS: [number, number][] = [[0.66, 0.04], [0.82, 0.04], [0.66, 0.3], [0.82, 0.3]];
 
 function freeSlot(taken: { x: number; y: number }[], slots: [number, number][]): [number, number] {
   const free = slots.find(([x, y]) => !taken.some((t) => Math.abs(t.x - x) < 0.06 && Math.abs(t.y - y) < 0.1));

@@ -41,8 +41,11 @@ export function Debrief({ session, reducedMotion, onReplay, onReset }: Props) {
       return { at: q.ranAt, text: `Q-${String(q.id).padStart(2, '0')} ${t(`tool.${q.tool}`)} −${q.costMin}′ ${q.useful ? '' : `· ${t('debrief.detour')}`}`, kind: 'query', useful: q.useful, detail: entry?.request.tool === 'metrics' ? entry.request.query : entry?.request.tool === 'logs' || entry?.request.tool === 'traces' ? entry.request.filter : undefined };
     }),
     ...context.mitigations.map((m) => ({ at: m.startedAt, text: t(`case.mitigation.${m.id}.title`), kind: 'mitigation', useful: m.id === data.solution.mitigation })),
+    ...context.statusUpdates.map((u) => ({ at: u.sentAt, text: t('debrief.path.status'), kind: 'status', useful: true })),
     ...(context.stableAt !== null ? [{ at: context.stableAt, text: t('debrief.path.stable'), kind: 'event', useful: true }] : []),
   ].sort((a, b) => a.at - b.at);
+  const answered = new Set(context.statusUpdates.map((u) => u.promptId));
+  const unanswered = data.stakeholderPrompts.filter((p) => p.at <= (context.closedAt ?? context.clock) && !answered.has(p.id));
 
   return (
     <div className="overlay">
@@ -75,6 +78,7 @@ export function Debrief({ session, reducedMotion, onReplay, onReset }: Props) {
               ))}
             </ol>
             {report.restartedBeforeLooking && <p>{t('debrief.restartFirst')}</p>}
+            {unanswered.map((p) => <p key={p.id}>{t('debrief.unanswered', { from: t(`case.${p.fromKey}`), clock: clockLabel(p.at) })}</p>)}
             {report.factorsNamed.distractors.length > 0 && <p>{t('debrief.distractors', { count: report.factorsNamed.distractors.length })}</p>}
             {report.factorsNamed.missed.length > 0 && <p>{t('debrief.missed', { count: report.factorsNamed.missed.length })}</p>}
           </section>

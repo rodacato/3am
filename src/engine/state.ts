@@ -1,4 +1,5 @@
 import type { CaseData, Component, Effect } from './case-schema';
+import { effectWindow, timedChanges } from './jitter';
 import { smoothNoise } from './noise';
 
 export type AppliedMitigation = { id: string; startedAt: number; effectiveAt: number };
@@ -50,7 +51,7 @@ export function configAt(s: Scenario, minute: number): Record<string, Record<str
   const reverted = new Set(
     mitigationActions(s, minute).flatMap(({ action }) => (action.type === 'revertChange' ? [action.change] : [])),
   );
-  for (const change of s.data.changes) {
+  for (const change of timedChanges(s)) {
     if (change.kind !== 'config' || change.at > minute || reverted.has(change.id)) continue;
     (config[change.component] ??= {})[change.key] = change.to;
   }
@@ -70,12 +71,13 @@ export function entryRps(s: Scenario, minute: number): number {
 }
 
 function effectStrength(effect: Effect, s: Scenario, minute: number): { ramp: number; value: number } | null {
-  if (minute < effect.from || (effect.until !== undefined && minute >= effect.until)) return null;
+  const { from, until } = effectWindow(s, effect);
+  if (minute < from || (until !== undefined && minute >= until)) return null;
   if (effectiveBy(s, effect.removedBy, minute)) return null;
   const reset = s.mitigations
     .filter((m) => effect.resetBy.includes(m.id) && m.effectiveAt <= minute)
-    .reduce((latest, m) => Math.max(latest, m.effectiveAt), effect.from);
-  const ramp = effect.rampMin > 0 ? Math.min(1, (minute - effect.from + 1) / effect.rampMin) : 1;
+    .reduce((latest, m) => Math.max(latest, m.effectiveAt), from);
+  const ramp = effect.rampMin > 0 ? Math.min(1, (minute - from + 1) / effect.rampMin) : 1;
   return { ramp, value: effect.value + effect.growthPerMin * (minute - reset) };
 }
 

@@ -21,12 +21,14 @@ export function strings(locale: Locale) {
   return { ui: (k: string) => get(ui, k), kase: (k: string) => get(kase, k) };
 }
 
+// Seed storage before any app code runs, once per test, so the app's own first save cannot race it.
 export async function freshStart(page: Page, locale: Locale) {
-  await page.goto('./');
-  await page.evaluate((code) => {
+  await page.addInitScript((code) => {
+    if (sessionStorage.getItem('e2e-seeded')) return;
+    sessionStorage.setItem('e2e-seeded', '1');
     localStorage.clear();
     localStorage.setItem('3am', JSON.stringify({ version: 1, preferences: { locale: code, sound: false }, progress: {}, sessions: {} }));
   }, locale);
-  await page.reload();
+  await page.goto('./');
   await page.evaluate(() => document.fonts.ready);
 }
