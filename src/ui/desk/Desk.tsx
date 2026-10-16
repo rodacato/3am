@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { clockLabel } from '../../engine/time';
 import { LOCALES, useI18n } from '../../i18n/i18n';
 import type { MetricVocabulary } from '../../telemetry/source';
@@ -6,7 +6,6 @@ import { GlassBoard } from '../board/GlassBoard';
 import { Monitor } from '../monitor/Monitor';
 import type { PinInput } from '../monitor/pins';
 import { CaseFolder } from '../overlays/CaseFolder';
-import { Debrief } from '../overlays/Debrief';
 import { PostmortemSheet } from '../overlays/PostmortemSheet';
 import type { CaseProgress } from '../persistence';
 import type { Session } from '../session/useCaseSession';
@@ -16,6 +15,9 @@ import { Skyline } from '../window/Skyline';
 import { Phone } from './Phone';
 import { PrintTray } from './PrintTray';
 import { useLatest } from '../useLatest';
+
+// The debrief carries the graph layout engine; it loads only when a case closes.
+const Debrief = lazy(() => import('../overlays/Debrief').then((m) => ({ default: m.Debrief })));
 
 export type Focus = 'window' | 'monitor' | 'phone';
 
@@ -145,7 +147,11 @@ export function Desk(props: Props) {
         />
       )}
       {phase === 'postmortem' && <PostmortemSheet session={session} onSubmit={() => session.send({ type: 'SUBMIT_POSTMORTEM' })} />}
-      {phase === 'debrief' && <Debrief session={session} reducedMotion={reducedMotion} onReplay={props.onReplay} onReset={() => setConfirmReset(true)} />}
+      {phase === 'debrief' && (
+        <Suspense fallback={<div className="overlay"><div className="loading">{t('debrief.drawing')}</div></div>}>
+          <Debrief session={session} reducedMotion={reducedMotion} onReplay={props.onReplay} onReset={() => setConfirmReset(true)} />
+        </Suspense>
+      )}
       {confirmReset && (
         <div className="overlay" role="dialog" aria-modal="true" aria-labelledby="reset-q">
           <div className="confirm">
