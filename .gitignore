@@ -3,4 +3,11 @@ dist
 test-results
 playwright-report
 *.tsbuildinfo
+coverage
 .DS_Store
+
+# AI agents: local-only files; shared agent config stays tracked
+CLAUDE.local.md
+.claude/settings.local.json
+.claude/worktrees/
+.aider*

@@ -4,6 +4,12 @@
   "version": "0.1.0",
   "description": "3 AM: an interactive course on incident response, played as night-shift cases.",
   "license": "MIT",
+  "homepage": "https://rodacato.github.io/3am/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rodacato/3am.git"
+  },
+  "bugs": "https://github.com/rodacato/3am/issues",
   "type": "module",
   "engines": {
     "node": ">=22"
