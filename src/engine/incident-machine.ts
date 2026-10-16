@@ -105,6 +105,7 @@ export const incidentMachine = setup({
     },
     stable: {
       on: {
+        QUERY_DONE: { actions: 'recordQuery' },
         SEND_STATUS: { guard: 'promptIsDue', actions: 'recordStatus' },
         WRITE_POSTMORTEM: { target: 'postmortem', actions: assign(({ context }) => ({ closedAt: context.clock })) },
       },

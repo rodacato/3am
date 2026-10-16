@@ -1,0 +1,52 @@
+{
+  "title": "The Quiet Push",
+  "briefing.company": "Mercadito is a marketplace: thousands of small shops, one checkout. Orders go from the storefront to checkout-api, which calls the cart, the payments database and an external payment gateway that someone else runs.",
+  "briefing.role": "You're on call for checkout this week. It's Thursday. Nobody else is awake, which is the whole point of you.",
+  "briefing.tonight": "03:14. Checkout is slow. Again.",
+
+  "alert.summary": "checkout p99 latency > 4s for 10m",
+
+  "change.deployCart": "cart-api 3.8.1: dependency bumps, no behavior change",
+  "change.promoFlag": "promo banner on for the morning campaign",
+  "change.timeout": "align payment timeout with the provider's SLA doc (8s)",
+
+  "dashboard.checkout": "Checkout overview",
+  "panel.checkoutP99": "checkout-api · p99 latency",
+  "panel.checkoutRate": "checkout-api · requests by status",
+  "panel.paymentOutcomes": "checkout-api → payment-gw · attempts by outcome",
+  "panel.dbCpu": "payments-db · CPU",
+
+  "runbook.checkoutLatency.title": "Checkout latency is high",
+  "runbook.checkoutLatency.body": "Checkout latency is the sum of its dependencies. Before touching anything, find out which one got slower and when.\n\nFirst, look at what changed: deploys, config pushes and flags in the last hours. Most nights, the answer is in that list.\n\nThen split the time: server latency for checkout-api against client latency for each call it makes. The call that grew is the suspect. Its timeouts and retries decide how long a customer waits.\n\nRestarting checkout-api clears in-flight requests and nothing else. Use it only if you know why.",
+  "runbook.paymentGw.title": "payment-gw (external provider)",
+  "runbook.paymentGw.body": "payment-gw is run by an outside provider. We see it only through our own client metrics and spans: there are no server-side signals.\n\nEvery night between 02:30 and 05:00 the provider runs settlement. During that window a few percent of authorize calls hang for nine seconds or more. They don't fail; they just never answer in time.\n\nThe provider recommends a client timeout of 1 s or less with one retry. A short timeout turns a hung call into a fast retry that almost always succeeds.",
+
+  "mitigation.revert-cfg-413.title": "Roll back checkout-api config v413 → v412",
+  "mitigation.revert-cfg-413.what": "Restores payment.client.timeout_ms to its previous value on every instance.",
+  "mitigation.revert-cfg-413.doing": "Rolling back config v413…",
+  "mitigation.restart-checkout.title": "Restart checkout-api",
+  "mitigation.restart-checkout.what": "Fresh processes, same config. Drops in-flight requests for about a minute.",
+  "mitigation.restart-checkout.doing": "Restarting checkout-api, one instance at a time…",
+  "mitigation.scale-checkout.title": "Scale checkout-api from 4 to 8 instances",
+  "mitigation.scale-checkout.what": "More capacity. Helps if the problem is load.",
+  "mitigation.scale-checkout.doing": "Adding four instances to checkout-api…",
+
+  "prompt.lucia.from": "Lucía Ferrer · payments product",
+  "prompt.lucia.ask": "The morning team in Bogotá is asking why checkout feels slow. Are we losing orders? What do I tell them?",
+
+  "factor.timeoutRaised": "A config change raised the payment client timeout from 800 ms to 8 s.",
+  "factor.gwSlowTail": "During its nightly settlement window, the payment gateway leaves about 7% of calls hanging.",
+  "factor.unguardedConfig": "Config changes reach every instance at once, with no canary and no bounds check.",
+  "distractor.dbOverloaded": "payments-db ran out of CPU.",
+  "distractor.cartDeploy": "The 01:12 cart-api deploy introduced a regression.",
+  "distractor.trafficSpike": "A traffic spike overwhelmed checkout.",
+  "distractor.promoBanner": "The promo banner flag added load to the storefront.",
+
+  "chain.unguarded": "Config pushes skip canaries and bounds checks",
+  "chain.change": "03:03 · config v413: payment timeout 800 ms → 8 s",
+  "chain.settlement": "payment-gw settlement window: ~7% of calls hang",
+  "chain.waiting": "Hung calls now wait 8 s before the retry, not 0.8 s",
+  "chain.p99": "checkout p99 above 4 s",
+  "chain.customers": "Customers wait 8 s or more to pay; some give up",
+  "debrief.chainNote": "The short timeout used to hide the gateway's bad nights: a hung call failed fast and the retry went through. Raising it turned a hidden condition into a visible one. The person who pushed it read a real document and made a reasonable change; the system let it reach every instance at once."
+}

@@ -1,0 +1,52 @@
+{
+  "title": "El cambio silencioso",
+  "briefing.company": "Mercadito es un marketplace: miles de tiendas pequeñas, un solo checkout. Los pedidos van del storefront a checkout-api, que llama al carrito, a la base de datos de pagos y a una pasarela de pago externa que opera alguien más.",
+  "briefing.role": "Esta semana te toca la guardia de checkout. Es jueves. Nadie más está despierto, y para eso estás tú.",
+  "briefing.tonight": "03:14. Checkout está lento. Otra vez.",
+
+  "alert.summary": "checkout p99 latency > 4s durante 10m",
+
+  "change.deployCart": "cart-api 3.8.1: actualización de dependencias, sin cambios de comportamiento",
+  "change.promoFlag": "banner de promoción encendido para la campaña de la mañana",
+  "change.timeout": "alinear el timeout de pagos con el documento de SLA del proveedor (8s)",
+
+  "dashboard.checkout": "Panorama de checkout",
+  "panel.checkoutP99": "checkout-api · latencia p99",
+  "panel.checkoutRate": "checkout-api · solicitudes por estado",
+  "panel.paymentOutcomes": "checkout-api → payment-gw · intentos por resultado",
+  "panel.dbCpu": "payments-db · CPU",
+
+  "runbook.checkoutLatency.title": "La latencia de checkout está alta",
+  "runbook.checkoutLatency.body": "La latencia de checkout es la suma de sus dependencias. Antes de tocar nada, averigua cuál se volvió más lenta y cuándo.\n\nPrimero, mira qué cambió: despliegues, cambios de configuración y flags de las últimas horas. Casi todas las noches, la respuesta está en esa lista.\n\nDespués separa el tiempo: latencia de servidor de checkout-api contra latencia de cliente de cada llamada que hace. La llamada que creció es la sospechosa. Sus timeouts y reintentos deciden cuánto espera un cliente.\n\nReiniciar checkout-api limpia las solicitudes en curso y nada más. Úsalo solo si sabes por qué.",
+  "runbook.paymentGw.title": "payment-gw (proveedor externo)",
+  "runbook.paymentGw.body": "payment-gw lo opera un proveedor externo. Solo lo vemos a través de nuestras métricas y spans de cliente: no hay señales del lado del servidor.\n\nTodas las noches entre las 02:30 y las 05:00 el proveedor corre su liquidación. En esa ventana, un pequeño porcentaje de las llamadas de autorización se queda colgado nueve segundos o más. No fallan; simplemente nunca responden a tiempo.\n\nEl proveedor recomienda un timeout de cliente de 1 s o menos con un reintento. Un timeout corto convierte una llamada colgada en un reintento rápido que casi siempre funciona.",
+
+  "mitigation.revert-cfg-413.title": "Revertir la configuración de checkout-api v413 → v412",
+  "mitigation.revert-cfg-413.what": "Regresa payment.client.timeout_ms a su valor anterior en todas las instancias.",
+  "mitigation.revert-cfg-413.doing": "Revirtiendo la configuración v413…",
+  "mitigation.restart-checkout.title": "Reiniciar checkout-api",
+  "mitigation.restart-checkout.what": "Procesos nuevos, misma configuración. Tira las solicitudes en curso durante cerca de un minuto.",
+  "mitigation.restart-checkout.doing": "Reiniciando checkout-api, una instancia a la vez…",
+  "mitigation.scale-checkout.title": "Escalar checkout-api de 4 a 8 instancias",
+  "mitigation.scale-checkout.what": "Más capacidad. Sirve si el problema es la carga.",
+  "mitigation.scale-checkout.doing": "Agregando cuatro instancias a checkout-api…",
+
+  "prompt.lucia.from": "Lucía Ferrer · producto de pagos",
+  "prompt.lucia.ask": "El equipo de la mañana en Bogotá pregunta por qué checkout se siente lento. ¿Estamos perdiendo pedidos? ¿Qué les digo?",
+
+  "factor.timeoutRaised": "Un cambio de configuración subió el timeout del cliente de pagos de 800 ms a 8 s.",
+  "factor.gwSlowTail": "Durante su ventana nocturna de liquidación, la pasarela de pago deja colgadas cerca del 7% de las llamadas.",
+  "factor.unguardedConfig": "Los cambios de configuración llegan a todas las instancias a la vez, sin canario y sin validar límites.",
+  "distractor.dbOverloaded": "payments-db se quedó sin CPU.",
+  "distractor.cartDeploy": "El despliegue de cart-api de la 01:12 introdujo una regresión.",
+  "distractor.trafficSpike": "Un pico de tráfico rebasó a checkout.",
+  "distractor.promoBanner": "El flag del banner de promoción le metió carga al storefront.",
+
+  "chain.unguarded": "Los cambios de configuración no pasan por canario ni validación de límites",
+  "chain.change": "03:03 · configuración v413: timeout de pagos 800 ms → 8 s",
+  "chain.settlement": "Ventana de liquidación de payment-gw: ~7% de llamadas colgadas",
+  "chain.waiting": "Las llamadas colgadas ahora esperan 8 s antes del reintento, no 0.8 s",
+  "chain.p99": "p99 de checkout arriba de 4 s",
+  "chain.customers": "Los clientes esperan 8 s o más para pagar; algunos se rinden",
+  "debrief.chainNote": "El timeout corto escondía las malas noches de la pasarela: una llamada colgada fallaba rápido y el reintento pasaba. Subirlo convirtió una condición oculta en una visible. Quien hizo el cambio leyó un documento real e hizo un cambio razonable; el sistema dejó que llegara a todas las instancias a la vez."
+}
