@@ -8,9 +8,9 @@
 
 An interactive course on incident response, played as night-shift cases. A page wakes you at 03:14. You investigate with simulated but realistic telemetry, tape evidence to the window and string it to hypotheses, mitigate while the clock runs and affected users climb, then write a blameless postmortem and see what was really going on.
 
-![Case 01, from the page to the debrief](docs/media/case-01-demo.gif)
+![Case 01, from the page to the debrief](docs/media/demo.gif)
 
-[Full recording (MP4)](docs/media/case-01-demo.mp4) · screenshots in [English](docs/media/step1/en) and [Spanish](docs/media/step1/es-MX)
+[Full recording (MP4)](docs/media/demo.mp4) · screenshots in [English](docs/media/step1/en) and [Spanish](docs/media/step1/es-MX)
 
 It teaches observability, hypothesis-driven debugging, mitigation, incident communication and postmortems as one discipline. It runs standalone and is designed to embed in [Dojo](https://github.com/rodacato/dojo).
 
@@ -25,30 +25,33 @@ Case 01, *The Quiet Push*, ships in English and Spanish. Cases 02 to 08 are plan
 
 ## Run it
 
+Needs Node 22 or newer and npm.
+
 ```bash
 npm install
+npm run dev        # http://localhost:5317
 ```
 
-```bash
-npm run dev
-```
-
-Then open http://localhost:5317. Node 22 or newer.
+## Checks
 
 | Script | What it does |
 | --- | --- |
-| `npm run build` | Typecheck and build to `dist/` with relative paths (GitHub Pages and iframes) |
+| `npm run check` | typecheck, lint, Vitest, `check:i18n` and `check:solvable`: what CI's Check job runs |
 | `npm test` | Vitest: determinism, signal agreement, mitigations, PromQL, machine, OTLP, worker boundary, solvability |
-| `npm run e2e` | Playwright: the full case in both locales against the production build |
 | `npm run check:i18n` | Fails on any key missing in any locale or referenced by case data |
 | `npm run check:solvable` | A scripted investigator must close every case within budget, for five seeds |
-| `npm run check` | All of the above except e2e |
+| `npm run e2e:smoke` | Builds, then the one `@smoke` Playwright test (progress survives a reload) |
+| `npm run e2e` | Builds, then every Playwright test: case 01 from page to debrief in both locales, worker vs Node log counts, reduced motion |
+| `npm run build` | Typecheck and build to `dist/` with relative paths (GitHub Pages and iframes) |
+| `npm run demo` | Rebuilds and records `docs/media/demo.mp4` and `demo.gif` (needs `ffmpeg`) |
 
-CI runs every check and the e2e suite; pushes to `main` deploy to GitHub Pages.
+Install the browser once before the first e2e run: `npx playwright install chromium`.
 
-## How it is built
+CI runs `check` and the smoke test on every push and pull request, and the full e2e suite nightly and on demand. Pushes to `main` deploy to GitHub Pages.
 
-Everything runs in the browser; there is no backend. A case is a data file ([case 01](src/content/cases/case-01/case.ts)): topology, traffic, config, changes, fault effects, red herrings, log templates, tools and their time costs, mitigations, stakeholder prompts, contributing factors and the causal chain. Adding a case is adding a folder.
+## Architecture
+
+Everything runs in the browser; there is no backend. The simulation is deterministic: the same case, seed and actions produce the same night. ESLint forbids `Math.random`, `Date.now` and browser globals in `src/engine`, `src/telemetry` and `src/query`. A case is a data file ([case 01](src/content/cases/case-01/case.ts)): topology, traffic, config, changes, fault effects, red herrings, log templates, tools and their time costs, mitigations, stakeholder prompts, contributing factors and the causal chain. Adding a case is adding a folder.
 
 - `src/engine`: case schema (Zod), seeded randomness, system state per minute, tools, the XState incident lifecycle, rubric, scoring, solvability. Pure TypeScript, no browser APIs.
 - `src/telemetry`: one request simulator that metrics, logs and traces all derive from, so the signals agree by construction. OpenTelemetry-shaped, generated on demand, never stored.
@@ -56,7 +59,15 @@ Everything runs in the browser; there is no backend. A case is a data file ([cas
 - `src/worker`: the same engine behind a Web Worker with an LRU cache.
 - `src/i18n`, `src/content`, `src/host`, `src/ui`: locales, cases and sources, the host bridge, the desk.
 
-Decisions and their reasons are in [docs/adr](docs/adr/README.md). The visual directions explored before building are in [design/step0](design/step0).
+All visible text lives in `src/i18n/locales/` and in each case's `locales/`; `check:i18n` fails on a missing key. Decisions and their reasons are in [docs/adr](docs/adr/README.md). The visual directions explored before building are in [design/step0](design/step0).
+
+## Embedding in Dojo
+
+[Dojo](https://github.com/rodacato/dojo) is a self-hosted practice space for developers that embeds courses like this one in an iframe. 3 AM talks to its host only through the `HostBridge` port ([src/host/bridge.ts](src/host/bridge.ts)), and only the standalone adapter exists today. The embedded adapter will speak Dojo's scroll protocol v0 ([ADR 0012](docs/adr/0012-dojo-integration.md); the manifest and message mapping are in [docs/plan.md](docs/plan.md)). Until Dojo offers a review capability, the deterministic rubric is the postmortem review ([ADR 0011](docs/adr/0011-contributing-factors-and-review.md)).
+
+## Contributing
+
+A case is one folder in `src/content/cases/<id>/`: `case.ts`, validated by `src/engine/case-schema.ts`, plus one locale file per language in its `locales/`. `check:i18n` fails on any key the case uses that a locale lacks, and `check:solvable` fails unless the case's solution closes it within budget for every seed. A language is one more file in `src/i18n/locales/` and in every case's `locales/`. Run `npm run check` and `npm run e2e:smoke` before opening a pull request, and write an ADR when a decision changes.
 
 ## Take the case home
 
@@ -84,8 +95,8 @@ Point the logs pipeline at Loki or the traces at Tempo the same way. The telemet
 
 ## Sources
 
-The course paraphrases and cites; it does not reproduce. Google's SRE book and workbook (incident management, postmortem culture), Brendan Gregg's USE method, Tom Wilkie's RED method, *Observability Engineering* (Majors, Fong-Jones, Miranda), Sidney Dekker's *Field Guide to Understanding Human Error* and Richard Cook's *How Complex Systems Fail*. Each case ends with what to read next.
+The course paraphrases and cites; it does not reproduce. Google's SRE book and workbook (incident management, postmortem culture), Brendan Gregg's USE method, Tom Wilkie's RED method, *Observability Engineering* (Majors, Fong-Jones, Miranda), Sidney Dekker's *Field Guide to Understanding Human Error* and Richard Cook's *How Complex Systems Fail*. Each case ends with what to read next. Fonts: Fraunces and IBM Plex Mono, self-hosted through Fontsource.
 
 ## License
 
-[MIT](LICENSE)
+MIT, see [LICENSE](LICENSE). Dependencies keep their own licenses: elkjs (EPL-2.0 or GPL-3.0, used unmodified), @prometheus-io/lezer-promql (Apache-2.0) and the fonts (SIL OFL 1.1). See [ADR 0009](docs/adr/0009-libraries.md).

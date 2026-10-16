@@ -24,6 +24,7 @@
     "test:watch": "vitest",
     "e2e": "npm run build && playwright test",
     "e2e:smoke": "npm run build && playwright test --grep @smoke",
+    "demo": "npm run build && node scripts/record-demo.mjs",
     "check:i18n": "tsx scripts/check-i18n.ts",
     "check:solvable": "tsx scripts/check-solvable.ts",
     "check": "npm run typecheck && npm run lint && npm run test && npm run check:i18n && npm run check:solvable"
