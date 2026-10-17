@@ -38,7 +38,7 @@
   "factor.gwSlowTail": "Durante su ventana nocturna de liquidación, la pasarela de pago deja colgadas cerca del 7% de las llamadas.",
   "factor.unguardedConfig": "Los cambios de configuración llegan a todas las instancias a la vez, sin canario y sin validar límites.",
   "distractor.dbOverloaded": "payments-db se quedó sin CPU.",
-  "distractor.cartDeploy": "El despliegue de cart-api de la 01:12 introdujo una regresión.",
+  "distractor.cartDeploy": "El despliegue de cart-api de esta noche introdujo una regresión.",
   "distractor.trafficSpike": "Un pico de tráfico rebasó a checkout.",
   "distractor.promoBanner": "El flag del banner de promoción le metió carga al storefront.",
 

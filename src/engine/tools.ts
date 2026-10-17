@@ -91,7 +91,7 @@ function runMetrics(s: Scenario, now: number, query: string, fromMin?: number, t
   const to = Math.min(now, toMin ?? now);
   const from = Math.max(s.data.historyFrom, fromMin ?? to - DEFAULT_WINDOW_MIN);
   const result = evaluateRange(metricSource(s, now), query, { fromMin: from, toMin: to, stepMin: 1 });
-  return { query, result, evidence: metricEvidenceKeys(query) };
+  return { query, result, evidence: result.series.length ? metricEvidenceKeys(query) : [] };
 }
 
 function costOf(s: Scenario, request: ToolRequest): number {

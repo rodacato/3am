@@ -5,7 +5,7 @@ import { caseEvidenceKeys, factorCoverage, type FactorCoverage } from './evidenc
 import type { IncidentContext } from './incident-machine';
 import type { Scenario } from './state';
 
-export type QueryVerdict = { id: number; ranAt: number; costMin: number; tool: string; useful: boolean };
+export type QueryVerdict = { id: number; ranAt: number; costMin: number; tool: string; useful: boolean; afterStable: boolean };
 
 export type MethodReport = {
   timeToMitigateMin: number | null;
@@ -26,8 +26,17 @@ export type MethodReport = {
 // Method over luck: how the reader got there matters as much as where they ended up.
 export function reportMethod(data: CaseData, seed: number, context: IncidentContext, board: Board, postmortem: Postmortem): MethodReport {
   const relevant = caseEvidenceKeys(data);
-  const queries = context.queries.map((q) => ({
-    id: q.id, ranAt: q.ranAt, costMin: q.costMin, tool: q.request.tool, useful: q.evidence.some((k) => relevant.has(k)),
+  const hasEvidence = (q: IncidentContext['queries'][number]) => q.evidence.some((k) => relevant.has(k));
+  // A trace search shows no evidence itself; it is how the reader reaches the trace that does.
+  const leadsToEvidence = (i: number) => {
+    const next = context.queries.slice(i + 1);
+    const end = next.findIndex((q) => q.request.tool === 'traces');
+    return next.slice(0, end === -1 ? undefined : end).some((q) => q.request.tool === 'trace' && hasEvidence(q));
+  };
+  const queries = context.queries.map((q, i) => ({
+    id: q.id, ranAt: q.ranAt, costMin: q.costMin, tool: q.request.tool,
+    useful: hasEvidence(q) || (q.request.tool === 'traces' && leadsToEvidence(i)),
+    afterStable: context.stableAt !== null && q.ranAt >= context.stableAt,
   }));
   const pinnedEvidence = board.pins.flatMap((p) => p.evidence);
   const scenario: Scenario = { data, seed, mitigations: context.mitigations };
@@ -43,7 +52,7 @@ export function reportMethod(data: CaseData, seed: number, context: IncidentCont
     withinBudget: context.clock - data.page.at <= data.budgetMin,
     usersAffected: affectedUsers(scenario, endedAt),
     queries,
-    detourMin: queries.filter((q) => !q.useful).reduce((sum, q) => sum + q.costMin, 0),
+    detourMin: queries.filter((q) => !q.useful && !q.afterStable).reduce((sum, q) => sum + q.costMin, 0),
     coverage: factorCoverage(data, pinnedEvidence),
     pinnedRelevant: board.pins.filter((p) => p.evidence.some((k) => relevant.has(k))).length,
     pinnedTotal: board.pins.length,

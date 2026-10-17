@@ -4,10 +4,19 @@ import type { CaseData } from '../../engine/case-schema';
 import { useI18n } from '../../i18n/i18n';
 
 const NODE_W = 188;
-const NODE_H = 84;
+const MIN_NODE_H = 84;
+const LABEL_TOP = 22;
+const LINE_H = 17.5;
+// Fraunces at 14px fits about 22 characters across the label box; a generous guess beats a clipped sentence.
+const CHARS_PER_LINE = 21;
 const elk = new ELK();
 
-type Laid = { nodes: { id: string; x: number; y: number; layer: number }[]; edges: { id: string; points: { x: number; y: number }[] }[]; width: number; height: number };
+function nodeHeight(label: string): number {
+  const lines = Math.ceil(label.length / CHARS_PER_LINE);
+  return Math.max(MIN_NODE_H, LABEL_TOP + lines * LINE_H + 10);
+}
+
+type Laid = { nodes: { id: string; x: number; y: number; height: number; layer: number }[]; edges: { id: string; points: { x: number; y: number }[] }[]; width: number; height: number };
 
 const KIND_COLOR: Record<string, string> = { change: '#E0533D', condition: '#2B2823', latent: '#6B7480', symptom: '#2B2823', impact: '#E0533D' };
 
@@ -20,7 +29,7 @@ export function CausalChain({ data, named, reducedMotion }: { data: CaseData; na
     const graph: ElkNode = {
       id: 'root',
       layoutOptions: { 'elk.algorithm': 'layered', 'elk.direction': 'RIGHT', 'elk.spacing.nodeNode': '26', 'elk.layered.spacing.nodeNodeBetweenLayers': '44', 'elk.edgeRouting': 'ORTHOGONAL' },
-      children: data.causalChain.nodes.map((n) => ({ id: n.id, width: NODE_W, height: NODE_H })),
+      children: data.causalChain.nodes.map((n) => ({ id: n.id, width: NODE_W, height: nodeHeight(t(`case.${n.labelKey}`)) })),
       edges: data.causalChain.edges.map((e, i) => ({ id: `e${i}`, sources: [e.from], targets: [e.to] })),
     };
     let live = true;
@@ -28,7 +37,7 @@ export function CausalChain({ data, named, reducedMotion }: { data: CaseData; na
       if (!live) return;
       const xs = [...new Set((out.children ?? []).map((c) => c.x ?? 0))].sort((a, b) => a - b);
       setLaid({
-        nodes: (out.children ?? []).map((c) => ({ id: c.id, x: c.x ?? 0, y: c.y ?? 0, layer: xs.indexOf(c.x ?? 0) })),
+        nodes: (out.children ?? []).map((c) => ({ id: c.id, x: c.x ?? 0, y: c.y ?? 0, height: c.height ?? MIN_NODE_H, layer: xs.indexOf(c.x ?? 0) })),
         edges: (out.edges ?? []).map((e) => {
           const s = e.sections?.[0];
           return { id: e.id, points: s ? [s.startPoint, ...(s.bendPoints ?? []), s.endPoint] : [] };
@@ -38,7 +47,7 @@ export function CausalChain({ data, named, reducedMotion }: { data: CaseData; na
       });
     });
     return () => { live = false; };
-  }, [data]);
+  }, [data, t]);
 
   if (!laid) return <p className="muted">{t('debrief.drawing')}</p>;
   const nodeById = new Map(data.causalChain.nodes.map((n) => [n.id, n]));
@@ -67,12 +76,12 @@ export function CausalChain({ data, named, reducedMotion }: { data: CaseData; na
         return (
           <g key={n.id} transform={`translate(${n.x},${n.y})`}>
           <g style={{ animation: reducedMotion ? undefined : `unfold .6s ${delay(n.layer)} both` }}>
-            <rect width={NODE_W} height={NODE_H} fill="#F3EFE6" stroke={KIND_COLOR[node.kind]} strokeWidth={status === 'named' ? 2 : 1} strokeDasharray={status === 'missed' ? '4 3' : undefined} />
+            <rect width={NODE_W} height={n.height} fill="#F3EFE6" stroke={KIND_COLOR[node.kind]} strokeWidth={status === 'named' ? 2 : 1} strokeDasharray={status === 'missed' ? '4 3' : undefined} />
             <rect width={NODE_W} height={3} fill={KIND_COLOR[node.kind]} />
             <text x={10} y={17} fontFamily="IBM Plex Mono" fontSize={9} letterSpacing="0.08em" fill={KIND_COLOR[node.kind]}>
               {t(`debrief.kind.${node.kind}`).toUpperCase()}{status ? ` · ${t(`debrief.status.${status}`)}` : ''}
             </text>
-            <foreignObject x={8} y={22} width={NODE_W - 16} height={NODE_H - 26}>
+            <foreignObject x={8} y={LABEL_TOP} width={NODE_W - 16} height={n.height - LABEL_TOP - 4}>
               <div style={{ fontFamily: 'var(--serif)', fontSize: 14, lineHeight: 1.22, color: '#2B2823' }}>{t(`case.${node.labelKey}`)}</div>
             </foreignObject>
           </g>
