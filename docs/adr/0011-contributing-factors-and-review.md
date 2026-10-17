@@ -1,6 +1,6 @@
 # ADR 0011: Contributing factors, a fixed rubric, LLM only through the host
 
-Status: accepted, 2026-10-16
+Status: accepted, 2026-10-16. Names in the rubric superseded by [ADR 0013](0013-rubric-checks-shape-not-truth.md).
 
 ## Context
 

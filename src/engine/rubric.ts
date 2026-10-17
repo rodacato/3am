@@ -8,9 +8,15 @@ export function blameTerms(...lists: string[]): string[] {
   return lists.flatMap((l) => l.split('|')).map((t) => t.trim().toLowerCase()).filter(Boolean);
 }
 
-function findBlame(text: string, terms: string[], people: string[]): string | null {
+function findIn(text: string, needles: string[]): string | null {
   const lower = text.toLowerCase();
-  return terms.find((t) => lower.includes(t)) ?? people.find((p) => lower.includes(p.toLowerCase())) ?? null;
+  return needles.find((n) => lower.includes(n.toLowerCase())) ?? null;
+}
+
+// Naming who ran a step can be a plain fact; only the reader can tell whether the sentence explains or accuses.
+function nameCheck(id: string, text: string, people: string[]): RubricItem[] {
+  const name = findIn(text, people);
+  return name ? [{ id, kind: 'self', passed: null, params: { name } }] : [];
 }
 
 const TIME = /\b([01]?\d|2[0-3]):[0-5]\d\b/;
@@ -24,7 +30,7 @@ export function reviewPostmortem(data: CaseData, pm: Postmortem, terms: string[]
   const distractors = new Set(data.distractorFactors.map((d) => d.id));
   const actions = pm.actionItems.filter((a) => a.text.trim());
   const allText = [pm.summary, pm.timeline, pm.impact, pm.customFactor, pm.wentWell, ...actions.map((a) => a.text)].join('\n');
-  const blame = findBlame(allText, terms, casePeople(data));
+  const blame = findIn(allText, terms);
   const timelineLines = pm.timeline.split('\n').filter((l) => TIME.test(l)).length;
   const matched = pm.factors.filter((f) => expected.includes(f)).length;
 
@@ -40,15 +46,17 @@ export function reviewPostmortem(data: CaseData, pm: Postmortem, terms: string[]
     { id: 'pm.wentWell', kind: 'auto', passed: pm.wentWell.trim().length >= 20 },
     { id: 'pm.selfReadable', kind: 'self', passed: null },
     { id: 'pm.selfWhyNotWho', kind: 'self', passed: null },
+    ...nameCheck('pm.namesPerson', allText, casePeople(data)),
   ];
 }
 
 export function reviewStatusUpdate(text: string, terms: string[], people: string[]): RubricItem[] {
-  const blame = findBlame(text, terms, people);
+  const blame = findIn(text, terms);
   return [
     { id: 'status.impact', kind: 'auto', passed: /\d/.test(text) },
     { id: 'status.nextUpdate', kind: 'auto', passed: TIME.test(text) || /\b\d+\s?(min|minutes|minutos|h)\b/i.test(text) },
     { id: 'status.length', kind: 'auto', passed: text.trim().length >= 60 && text.trim().length <= 700, params: { length: text.trim().length } },
     { id: 'status.blameless', kind: 'auto', passed: blame === null, params: { term: blame ?? '' } },
+    ...nameCheck('status.namesPerson', text, people),
   ];
 }
