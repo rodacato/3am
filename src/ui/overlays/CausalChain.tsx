@@ -80,7 +80,7 @@ export function CausalChain({ data, named, reducedMotion }: { data: CaseData; na
           <g style={{ animation: reducedMotion ? undefined : `unfold .6s ${delay(n.layer)} both` }}>
             <rect width={NODE_W} height={n.height} fill="#F3EFE6" stroke={KIND_COLOR[node.kind]} strokeWidth={status === 'named' ? 2 : 1} strokeDasharray={status === 'missed' ? '4 3' : undefined} />
             <rect width={NODE_W} height={3} fill={KIND_COLOR[node.kind]} />
-            <text x={10} y={17} fontFamily="IBM Plex Mono" fontSize={9} letterSpacing="0.08em" fill={KIND_TEXT[node.kind]}>
+            <text x={10} y={17} fontFamily="IBM Plex Mono" fontSize={10} letterSpacing="0.08em" fill={KIND_TEXT[node.kind]}>
               {t(`debrief.kind.${node.kind}`).toUpperCase()}{status ? ` · ${t(`debrief.status.${status}`)}` : ''}
             </text>
             <foreignObject x={8} y={LABEL_TOP} width={NODE_W - 16} height={n.height - LABEL_TOP - 4}>
