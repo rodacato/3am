@@ -7,6 +7,7 @@ import { Monitor } from '../monitor/Monitor';
 import type { PinInput } from '../monitor/pins';
 import { CaseFolder } from '../overlays/CaseFolder';
 import { PostmortemSheet } from '../overlays/PostmortemSheet';
+import { Tour, type TourMode } from '../overlays/Tour';
 import type { CaseProgress } from '../persistence';
 import type { Session } from '../session/useCaseSession';
 import { playPage } from '../sound';
@@ -35,6 +36,9 @@ type Props = {
   onReset: () => void;
   onStarted: () => void;
   onCompleted: () => void;
+  tour: TourMode;
+  tourSeen: boolean;
+  onTourSeen: () => void;
 };
 
 export function Desk(props: Props) {
@@ -48,6 +52,8 @@ export function Desk(props: Props) {
   const [reopen, setReopen] = useState<{ id: number; nonce: number } | null>(null);
   const [watchClock, setWatchClock] = useState<number | null>(null);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [touring, setTouring] = useState(props.tour === 'on' || (props.tour === 'auto' && !props.tourSeen && phase === 'briefing'));
+  const [tourZone, setTourZone] = useState<Focus | null>(null);
   const previous = useRef(phase);
   const onCompleted = useLatest(props.onCompleted);
 
@@ -83,9 +89,12 @@ export function Desk(props: Props) {
   const focusWindow = useCallback(() => setFocus('window'), []);
   const focusMonitor = useCallback(() => setFocus('monitor'), []);
   const focusPhone = useCallback(() => setFocus('phone'), []);
+  const onTourSeen = useLatest(props.onTourSeen);
+  const closeTour = useCallback(() => { setTouring(false); setTourZone(null); onTourSeen.current(); }, [onTourSeen]);
+  const roomFocus = touring && tourZone ? tourZone : reducedMotion ? 'monitor' : focus;
 
   return (
-    <div className="room" data-focus={reducedMotion ? 'monitor' : focus} data-lit={lit} data-phase={phase}>
+    <div className="room" data-focus={roomFocus} data-lit={touring ? 'true' : lit} data-phase={phase}>
       <div className="window" ref={windowRef} aria-label={t('window.label')}>
         <div className="window__glass" style={{ background: skyGradient(dawn), transition: reducedMotion ? undefined : 'background 1.5s linear' }}>
           <Skyline data={data} seed={session.seed} pulse={session.pulse} dawn={dawn} reducedMotion={reducedMotion} />
@@ -115,6 +124,7 @@ export function Desk(props: Props) {
             <button key={l.code} aria-pressed={props.locale === l.code} onClick={() => props.onLocale(l.code)} aria-label={l.name}>{l.short}</button>
           ))}
           <button aria-pressed={sound} onClick={() => props.onSound(!sound)}>{sound ? t('prefs.soundOn') : t('prefs.soundOff')}</button>
+          <button onClick={() => setTouring(true)}>{t('prefs.tour')}</button>
           <button onClick={() => setConfirmReset(true)}>{t('prefs.reset')}</button>
         </span>
       </div>
@@ -134,7 +144,7 @@ export function Desk(props: Props) {
       </div>
       <div className="lamp" aria-hidden="true" />
 
-      {phase === 'briefing' && (
+      {phase === 'briefing' && !touring && (
         <CaseFolder
           caseNumber={props.caseNumber}
           progress={props.progress}
@@ -143,6 +153,7 @@ export function Desk(props: Props) {
           onLocale={props.onLocale}
           onSound={props.onSound}
           onReplay={props.onReplay}
+          onTour={() => setTouring(true)}
           onStart={() => { session.send({ type: 'START' }); props.onStarted(); }}
         />
       )}
@@ -152,6 +163,7 @@ export function Desk(props: Props) {
           <Debrief session={session} reducedMotion={reducedMotion} onReplay={props.onReplay} onReset={() => setConfirmReset(true)} />
         </Suspense>
       )}
+      {touring && <Tour onZone={setTourZone} onClose={closeTour} />}
       {confirmReset && (
         <div className="overlay" role="dialog" aria-modal="true" aria-labelledby="reset-q">
           <div className="confirm">

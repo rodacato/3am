@@ -4,7 +4,7 @@ import type { Board, Postmortem } from '../engine/board';
 export const STORAGE_KEY = '3am';
 export const STORAGE_VERSION = 1;
 
-export type Preferences = { locale: string | null; sound: boolean };
+export type Preferences = { locale: string | null; sound: boolean; tourSeen?: boolean };
 
 export type CaseSession = {
   seed: number;

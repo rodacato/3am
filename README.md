@@ -34,6 +34,8 @@ npm install
 npm run dev        # http://localhost:5317
 ```
 
+A seven-step walkthrough of the desk opens on the first visit and comes back from the TOUR button under the window. Add `?tour=off` to the URL to never show it (embeds, recordings, tests) or `?tour=on` to show it again.
+
 ## Checks
 
 | Script | What it does |
