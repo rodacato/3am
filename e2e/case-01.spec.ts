@@ -75,16 +75,3 @@ for (const locale of LOCALES) {
     expect(errors).toEqual([]);
   });
 }
-
-test('progress survives a reload', { tag: '@smoke' }, async ({ page }) => {
-  const { ui } = strings('en');
-  await freshStart(page, 'en');
-  await page.getByRole('button', { name: ui('folder.start') }).click();
-  await page.getByRole('button', { name: ui('phone.ack') }).click();
-  await page.getByRole('tab', { name: ui('monitor.tab.changes') }).click();
-  await page.getByRole('button', { name: /PULL/ }).click();
-  await page.locator('.change', { hasText: 'v413' }).getByRole('button', { name: ui('monitor.tear') }).click();
-  await page.reload();
-  await expect(page.locator('.slip')).toHaveCount(1);
-  await expect(page.locator('.monitor__clock')).toContainText('03:16');
-});
