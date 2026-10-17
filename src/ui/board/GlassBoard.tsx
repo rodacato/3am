@@ -151,10 +151,10 @@ export function GlassBoard({ data, pins, hypotheses, dispatch, selectedPin, onSe
     <div className="glass" ref={containerRef} onPointerDown={onFocus}>
       {enabled && (
         <div className="glass__tools">
-          {selectedPin && <span className="hint" style={{ color: 'var(--amber)' }}>{t('board.tieHint')}</span>}
           <button onClick={addHypothesis}>{t('board.newHypothesis')}</button>
         </div>
       )}
+      {enabled && selectedPin && <div className="glass__hint" role="status">{t('board.tieHint')}</div>}
       {enabled && pins.length === 0 && hypotheses.length === 0 && <div className="glass__empty">{t('board.empty')}</div>}
       <RopeLayer links={links} glassRef={containerRef} rootRef={rootRef} reducedMotion={reducedMotion} />
       {pins.map((pin) => (

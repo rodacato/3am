@@ -18,7 +18,7 @@ type Props = {
   compact?: boolean;
 };
 
-const AXIS = { stroke: '#848D99', font: '10px "IBM Plex Mono"', grid: { stroke: '#262D37', width: 1, dash: [2, 4] }, ticks: { show: false } };
+const AXIS = { stroke: '#848D99', font: '11px "IBM Plex Mono"', grid: { stroke: '#262D37', width: 1, dash: [2, 4] }, ticks: { show: false } };
 
 export function seriesColor(label: string, index: number): { stroke: string; dash?: number[] } {
   if (/=error/i.test(label)) return { stroke: '#E0533D', dash: [3, 3] };
@@ -45,6 +45,7 @@ export function formatValue(v: number, unit: Unit): string {
 
 export function TimeChart({ times, series, unit, height, revealUpTo, markers = [], onSelect, compact = false }: Props) {
   const box = useRef<HTMLDivElement>(null);
+  const minWidth = compact ? 80 : 200;
   const plot = useRef<uPlot | null>(null);
   const onSelectRef = useLatest(onSelect);
   const markersRef = useLatest(markers);
@@ -53,7 +54,7 @@ export function TimeChart({ times, series, unit, height, revealUpTo, markers = [
     const el = box.current;
     if (!el) return;
     const opts: uPlot.Options = {
-      width: Math.max(200, el.clientWidth),
+      width: Math.max(minWidth, el.clientWidth),
       height,
       legend: { show: false },
       cursor: { drag: { x: Boolean(onSelectRef.current), y: false, setScale: false }, points: { show: false } },
@@ -92,7 +93,7 @@ export function TimeChart({ times, series, unit, height, revealUpTo, markers = [
     };
     const u = new uPlot(opts, [[], ...series.map(() => [])] as uPlot.AlignedData, el);
     plot.current = u;
-    const resize = new ResizeObserver(() => u.setSize({ width: Math.max(200, el.clientWidth), height }));
+    const resize = new ResizeObserver(() => u.setSize({ width: Math.max(minWidth, el.clientWidth), height }));
     resize.observe(el);
     return () => {
       resize.disconnect();
