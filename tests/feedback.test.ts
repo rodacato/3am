@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { EMPTY_POSTMORTEM, type Board } from '../src/engine/board';
+import { EMPTY_POSTMORTEM, type Board, type Postmortem } from '../src/engine/board';
+import { blameTerms, casePeople, reviewPostmortem, reviewStatusUpdate } from '../src/engine/rubric';
 import type { CaseData } from '../src/engine/case-schema';
 import type { IncidentContext, QueryLogEntry } from '../src/engine/incident-machine';
 import { reportMethod } from '../src/engine/scoring';
@@ -74,5 +75,30 @@ describe('method report', () => {
     const report = reportMethod(case01, 1, context(queries, at() + 30), board, EMPTY_POSTMORTEM);
     expect(report.queries[0]?.afterStable).toBe(true);
     expect(report.detourMin).toBe(0);
+  });
+});
+
+describe('postmortem rubric', () => {
+  const terms = blameTerms('fault|blame|should have');
+  const item = (pm: Postmortem, id: string) => reviewPostmortem(case01, pm, terms).find((r) => r.id === id);
+
+  it('a neutral sentence that names who ran a step is a question for the reader, not a failure', () => {
+    const pm = { ...EMPTY_POSTMORTEM, timeline: '03:03 r.ibarra pushed config v413 after reading the provider SLA doc.' };
+    expect(item(pm, 'pm.blameless')?.passed).toBe(true);
+    expect(item(pm, 'pm.namesPerson')).toMatchObject({ kind: 'self', passed: null, params: { name: 'r.ibarra' } });
+  });
+
+  it('blame vocabulary still fails, with or without a name', () => {
+    expect(item({ ...EMPTY_POSTMORTEM, summary: 'The on-call team should have caught it.' }, 'pm.blameless')).toMatchObject({ passed: false, params: { term: 'should have' } });
+  });
+
+  it('asks nothing about names when nobody is named', () => {
+    expect(item({ ...EMPTY_POSTMORTEM, summary: 'A config push raised the payment timeout.' }, 'pm.namesPerson')).toBeUndefined();
+  });
+
+  it('a status update that names someone gets the same question', () => {
+    const checks = reviewStatusUpdate('r.ibarra is rolling back the 03:03 config. 7% of orders slow. Next update 03:50.', terms, casePeople(case01));
+    expect(checks.find((c) => c.id === 'status.blameless')?.passed).toBe(true);
+    expect(checks.find((c) => c.id === 'status.namesPerson')?.kind).toBe('self');
   });
 });

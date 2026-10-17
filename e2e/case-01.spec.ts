@@ -65,7 +65,8 @@ for (const locale of LOCALES) {
     await sheet.getByRole('button', { name: ui('pm.file') }).click();
 
     await expect(page.getByRole('heading', { name: ui('debrief.title') })).toBeVisible();
-    await expect(page.locator('.stat').nth(3)).toContainText('2/3');
+    // The change card and the timeout log back the trigger only; the latent factor needs the config-reload log.
+    await expect(page.locator('.stat').nth(3)).toContainText('1/3');
     await expect(page.getByRole('img', { name: ui('debrief.chainLabel') })).toBeVisible();
     // Lucía asked at 03:30 and this run never replied; the debrief says so.
     await expect(page.locator('.debrief p', { hasText: kase('prompt.lucia.from') })).toBeVisible();

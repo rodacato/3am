@@ -104,7 +104,7 @@ export function PostmortemSheet({ session, onSubmit }: { session: Session; onSub
                 <li key={r.id} data-pass={selfChecks[r.id] === true}>
                   <label className="row" style={{ gap: 8 }}>
                     <input type="checkbox" checked={selfChecks[r.id] ?? false} onChange={(e) => setSelfChecks({ ...selfChecks, [r.id]: e.target.checked })} />
-                    {t(`rubric.${r.id}`)}
+                    {t(`rubric.${r.id}`, r.params)}
                   </label>
                 </li>
               ))}
