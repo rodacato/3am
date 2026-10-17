@@ -491,6 +491,16 @@ button { cursor: pointer; }
 
 .loading { height: 100%; display: grid; place-items: center; color: var(--fog-text); font-family: var(--serif); font-style: italic; font-size: 18px; }
 
+/* Walkthrough: the lamp lights the zone, the card sits over whatever is not being explained. */
+.tour { position: absolute; inset: 0; z-index: 60; display: flex; justify-content: center; align-items: flex-start; padding: 28px 24px; }
+.tour[data-zone='window'] { align-items: flex-end; }
+.tour[data-zone='phone'] { justify-content: flex-start; padding-left: 6vw; }
+.tour__card { width: min(480px, 100%); background: var(--screen); color: var(--paper); border: 1px solid var(--screen-line); border-top: 3px solid var(--amber); padding: 18px 22px 16px; box-shadow: 0 18px 40px -10px rgba(0, 0, 0, 0.85); }
+.tour__kicker { font-size: 11px; letter-spacing: 0.12em; color: var(--amber); }
+.tour__card h2 { font-family: var(--serif); font-weight: 500; font-size: 22px; margin: 6px 0 8px; }
+.tour__card p { font-family: var(--serif); font-size: 16px; line-height: 1.5; margin: 0 0 16px; color: var(--paper); }
+.tour__row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+
 /* Desktop only, said out loud: below 900px the monitor collapses to a sliver. */
 /* Between 900px and a full laptop width the monitor is tight: trade padding for room before anything overlaps. */
 @media (max-width: 1150px) {

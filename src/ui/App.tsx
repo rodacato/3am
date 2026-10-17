@@ -8,6 +8,7 @@ import { detectLocale, I18nProvider, translate, useI18n, type Messages } from '.
 import type { MetricVocabulary } from '../telemetry/source';
 import { SimulationClient } from '../worker/client';
 import { Desk } from './desk/Desk';
+import type { TourMode } from './overlays/Tour';
 import { clearAll, EMPTY, load, save, type CaseSession, type Stored } from './persistence';
 import { useCaseSession } from './session/useCaseSession';
 import { useReducedMotion } from './useReducedMotion';
@@ -32,6 +33,14 @@ function newSeed(): number {
 }
 
 type Loaded = { data: CaseData; messages: Messages };
+
+// ?tour=off for embeds and tests that must not see it, ?tour=on to show it again on demand.
+function tourMode(search: string): TourMode {
+  const value = new URLSearchParams(search).get('tour');
+  if (value === 'off' || value === '0') return 'off';
+  if (value === 'on' || value === '1') return 'on';
+  return 'auto';
+}
 
 function NarrowNotice() {
   const { t } = useI18n();
@@ -59,6 +68,9 @@ function CaseRoom({ loaded, stored, setStored, client, locale, vocabulary, onRes
       reducedMotion={reducedMotion}
       onLocale={(code) => setStored((s) => ({ ...s, preferences: { ...s.preferences, locale: code } }))}
       onSound={(on) => setStored((s) => ({ ...s, preferences: { ...s.preferences, sound: on } }))}
+      tour={tourMode(window.location.search)}
+      tourSeen={stored.preferences.tourSeen === true}
+      onTourSeen={() => setStored((s) => ({ ...s, preferences: { ...s.preferences, tourSeen: true } }))}
       onReplay={() => setStored((s) => ({ ...s, sessions: { ...s.sessions, [data.id]: freshSession(newSeed()) } }))}
       onReset={() => { clearAll(); setStored(() => structuredClone(EMPTY)); onReset(); }}
       onStarted={() => bridge.unitStarted(data.id)}

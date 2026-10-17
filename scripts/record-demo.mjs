@@ -5,7 +5,7 @@ import { chromium } from '@playwright/test';
 import * as course from './demo-tour.mjs';
 
 const PORT = 5399;
-const URL = `http://localhost:${PORT}/`;
+const URL = `http://localhost:${PORT}/?tour=off`;
 const VIEWPORT = { width: 1440, height: 900 };
 const RAW_DIR = 'test-results/demo';
 const OUT_DIR = 'docs/media';

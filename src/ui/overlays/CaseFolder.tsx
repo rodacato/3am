@@ -10,9 +10,10 @@ type Props = {
   onSound: (on: boolean) => void;
   onStart: () => void;
   onReplay: () => void;
+  onTour: () => void;
 };
 
-export function CaseFolder({ caseNumber, progress, locale, sound, onLocale, onSound, onStart, onReplay }: Props) {
+export function CaseFolder({ caseNumber, progress, locale, sound, onLocale, onSound, onStart, onReplay, onTour }: Props) {
   const { t } = useI18n();
   return (
     <div className="overlay" style={{ background: 'transparent', alignItems: 'end', paddingBottom: '4vh' }}>
@@ -40,6 +41,7 @@ export function CaseFolder({ caseNumber, progress, locale, sound, onLocale, onSo
                 {l.name}
               </button>
             ))}
+            <button className="big-button big-button--ghost" onClick={onTour}>{t('folder.tour')}</button>
             <button className="big-button big-button--ghost" aria-pressed={sound} onClick={() => onSound(!sound)}>{sound ? t('prefs.soundOn') : t('prefs.soundOff')}</button>
           </div>
           <div className="row">
