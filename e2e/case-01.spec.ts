@@ -38,10 +38,12 @@ for (const locale of LOCALES) {
     await card.locator('textarea').fill('timeout raised by the 03:03 config push');
     await card.locator('select').selectOption('checkout-api');
     await card.getByRole('button', { name: ui('board.save') }).click();
-    for (const i of [0, 1]) {
-      await page.locator('.slip').nth(i).click();
-      await card.click({ position: { x: 120, y: 60 } });
-    }
+    await page.locator('.slip').nth(0).click();
+    await card.click({ position: { x: 120, y: 60 } });
+    // The second slip is tied with the keyboard alone.
+    await page.locator('.slip').nth(1).focus();
+    await page.keyboard.press('Enter');
+    await card.getByRole('button', { name: ui('board.tieHere') }).press('Enter');
     await expect(card).toContainText(ui('board.pieces.other').replace('{count}', '2'));
     await card.getByRole('button', { name: ui('board.markHolds'), exact: true }).click();
     await expect(card).toHaveAttribute('data-status', 'confirmed');

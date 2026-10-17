@@ -112,6 +112,7 @@ function HypothesisCard({ h, index, data, containerRef, dispatch, tieMode, onTie
           <div className="hypothesis__text">{h.text}</div>
           <div className="hypothesis__row">
             <span>{t('board.pieces', { count: h.pins.length })}</span>
+            {tieMode && <button onClick={onTie}>{t('board.tieHere')}</button>}
             {h.status !== 'confirmed' && <button onClick={() => dispatch({ type: 'status', id: h.id, status: 'confirmed' })}>{t('board.markHolds')}</button>}
             {h.status !== 'refuted' && <button onClick={() => dispatch({ type: 'status', id: h.id, status: 'refuted' })}>{t('board.markAlibi')}</button>}
             {h.status !== 'open' && <button onClick={() => dispatch({ type: 'status', id: h.id, status: 'open' })}>{t('board.reopen')}</button>}
