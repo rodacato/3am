@@ -14,12 +14,14 @@ An interactive course on incident response, played as night-shift cases. A page 
 
 It teaches observability, hypothesis-driven debugging, mitigation, incident communication and postmortems as one discipline. It runs standalone and is designed to embed in [Dojo](https://github.com/rodacato/dojo).
 
+**Who it is for:** developers who want practice debugging and troubleshooting a running system: you know HTTP and services, and you have not yet worked an incident from page to postmortem. It needs a desktop screen, 900 px or wider. One case ships today, in English and Spanish.
+
 ## How a case works
 
 - **The window** is the evidence board. The skyline is the service map: each building is a component, its lit windows turn red when its requests fail or crawl, and the cables between rooftops are calls. Torn-off slips and hypothesis cards are taped to the glass, tied with red string. A hypothesis accuses a building; when it holds the strings pull taut, when it has an alibi they come loose and fall.
 - **The monitor** holds the tools: dashboards, PromQL, logs, traces, the change log, runbooks and mitigation actions. Every query costs minutes and prints a receipt; the clock moves only when you act.
 - **The phone** wakes you, keeps the time and the count of affected users, and carries the stakeholder asking for a status update.
-- **After the fix**, a postmortem with a deterministic rubric (no blame, contributing factors not a culprit), then a debrief: the hidden causal chain next to your own night, with detours, time to stable and users affected.
+- **After the fix**, a postmortem with a deterministic rubric that checks its shape (timestamps, numbers, factors, no blame words) and leaves truth and clarity to you, then a debrief: the hidden causal chain next to your own night, with minutes spent off the case evidence, time to stable and estimated users affected.
 
 Case 01, *The Quiet Push*, ships in English and Spanish. Cases 02 to 08 are planned.
 

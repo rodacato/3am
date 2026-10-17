@@ -34,7 +34,7 @@ const highlight = HighlightStyle.define([
   { tag: tags.propertyName, color: '#8F98A3' },
   { tag: tags.string, color: '#C9B48A' },
   { tag: tags.number, color: '#C9B48A' },
-  { tag: tags.operator, color: '#6B7480' },
+  { tag: tags.operator, color: '#848D99' },
 ]);
 
 const FUNCTIONS = [

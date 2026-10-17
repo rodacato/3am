@@ -18,7 +18,7 @@ type Props = {
   compact?: boolean;
 };
 
-const AXIS = { stroke: '#6B7480', font: '10px "IBM Plex Mono"', grid: { stroke: '#262D37', width: 1, dash: [2, 4] }, ticks: { show: false } };
+const AXIS = { stroke: '#848D99', font: '10px "IBM Plex Mono"', grid: { stroke: '#262D37', width: 1, dash: [2, 4] }, ticks: { show: false } };
 
 export function seriesColor(label: string, index: number): { stroke: string; dash?: number[] } {
   if (/=error/i.test(label)) return { stroke: '#E0533D', dash: [3, 3] };

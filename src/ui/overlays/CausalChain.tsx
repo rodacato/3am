@@ -19,6 +19,8 @@ function nodeHeight(label: string): number {
 type Laid = { nodes: { id: string; x: number; y: number; height: number; layer: number }[]; edges: { id: string; points: { x: number; y: number }[] }[]; width: number; height: number };
 
 const KIND_COLOR: Record<string, string> = { change: '#E0533D', condition: '#2B2823', latent: '#6B7480', symptom: '#2B2823', impact: '#E0533D' };
+// The stroke colors fall under 4.5:1 as 9px text on the card; labels use darker inks of the same hue.
+const KIND_TEXT: Record<string, string> = { change: '#AD3A27', condition: '#2B2823', latent: '#5D6570', symptom: '#2B2823', impact: '#AD3A27' };
 
 // elk lays out the hidden chain from case data; nodes unfold layer by layer unless motion is reduced.
 export function CausalChain({ data, named, reducedMotion }: { data: CaseData; named: Set<string>; reducedMotion: boolean }) {
@@ -78,7 +80,7 @@ export function CausalChain({ data, named, reducedMotion }: { data: CaseData; na
           <g style={{ animation: reducedMotion ? undefined : `unfold .6s ${delay(n.layer)} both` }}>
             <rect width={NODE_W} height={n.height} fill="#F3EFE6" stroke={KIND_COLOR[node.kind]} strokeWidth={status === 'named' ? 2 : 1} strokeDasharray={status === 'missed' ? '4 3' : undefined} />
             <rect width={NODE_W} height={3} fill={KIND_COLOR[node.kind]} />
-            <text x={10} y={17} fontFamily="IBM Plex Mono" fontSize={9} letterSpacing="0.08em" fill={KIND_COLOR[node.kind]}>
+            <text x={10} y={17} fontFamily="IBM Plex Mono" fontSize={9} letterSpacing="0.08em" fill={KIND_TEXT[node.kind]}>
               {t(`debrief.kind.${node.kind}`).toUpperCase()}{status ? ` · ${t(`debrief.status.${status}`)}` : ''}
             </text>
             <foreignObject x={8} y={LABEL_TOP} width={NODE_W - 16} height={n.height - LABEL_TOP - 4}>

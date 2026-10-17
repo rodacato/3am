@@ -4,7 +4,7 @@ import { EMPTY_POSTMORTEM } from '../engine/board';
 import type { CaseData } from '../engine/case-schema';
 import { reportMethod } from '../engine/scoring';
 import { createStandaloneBridge } from '../host/bridge';
-import { detectLocale, I18nProvider, translate, type Messages } from '../i18n/i18n';
+import { detectLocale, I18nProvider, translate, useI18n, type Messages } from '../i18n/i18n';
 import type { MetricVocabulary } from '../telemetry/source';
 import { SimulationClient } from '../worker/client';
 import { Desk } from './desk/Desk';
@@ -32,6 +32,11 @@ function newSeed(): number {
 }
 
 type Loaded = { data: CaseData; messages: Messages };
+
+function NarrowNotice() {
+  const { t } = useI18n();
+  return <div className="narrow-notice" role="note"><p>{t('app.narrow')}</p></div>;
+}
 
 function CaseRoom({ loaded, stored, setStored, client, locale, vocabulary, onReset }: {
   loaded: Loaded; stored: Stored; setStored: (fn: (s: Stored) => Stored) => void; client: SimulationClient; locale: string; vocabulary: MetricVocabulary | null; onReset: () => void;
@@ -106,6 +111,7 @@ export function App() {
   const session = stored.sessions[loaded.data.id];
   return (
     <I18nProvider locale={locale} caseMessages={loaded.messages}>
+      <NarrowNotice />
       <CaseRoom key={`${loaded.data.id}#${session?.seed ?? FIRST_SEED}#${epoch}`} loaded={loaded} stored={stored} setStored={setStored} client={client} locale={locale} vocabulary={vocabulary} onReset={() => setEpoch((e) => e + 1)} />
     </I18nProvider>
   );
