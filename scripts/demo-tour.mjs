@@ -78,7 +78,10 @@ export default async function tour(page) {
   await pause(800);
   await page.locator('.action', { hasText: 'v413' }).getByRole('button').click();
   await button('GO', true).click();
-  await pause(8200);
+  await pause(5400);
+  // The social preview is this frame: evidence strung to a hypothesis while the rollback bends the line. 1.91:1, as Open Graph wants.
+  await page.screenshot({ path: 'public/og.png', clip: { x: 0, y: 0, width: 1440, height: 754 } });
+  await pause(2800);
 
   await button('CLOSE THE CASE').click();
   await pause(600);
