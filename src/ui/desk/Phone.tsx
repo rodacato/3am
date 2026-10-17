@@ -60,7 +60,7 @@ export function Phone({ session, displayClock, onFocus, focused }: Props) {
               {pulse && (
                 <div className="users">
                   {t('phone.affected')} <strong>{format(pulse.affectedUsers)}</strong>
-                  <em>{pulse.alertFiring ? t('phone.climbing') : t('phone.holding')}</em>
+                  <em>{pulse.affectedLastMinute > 0 ? t('phone.climbing', { count: pulse.affectedLastMinute }) : t('phone.holding')}</em>
                 </div>
               )}
               {sunUp && <div className="hint" style={{ fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: 13 }}>{t('phone.sunUp')}</div>}
