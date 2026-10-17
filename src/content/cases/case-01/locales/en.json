@@ -38,7 +38,7 @@
   "factor.gwSlowTail": "During its nightly settlement window, the payment gateway leaves about 7% of calls hanging.",
   "factor.unguardedConfig": "Config changes reach every instance at once, with no canary and no bounds check.",
   "distractor.dbOverloaded": "payments-db ran out of CPU.",
-  "distractor.cartDeploy": "The 01:12 cart-api deploy introduced a regression.",
+  "distractor.cartDeploy": "Tonight's cart-api deploy introduced a regression.",
   "distractor.trafficSpike": "A traffic spike overwhelmed checkout.",
   "distractor.promoBanner": "The promo banner flag added load to the storefront.",
 

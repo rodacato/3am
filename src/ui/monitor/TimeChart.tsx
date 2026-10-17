@@ -1,10 +1,11 @@
 import { useEffect, useRef } from 'react';
 import uPlot from 'uplot';
 import { clockLabel } from '../../engine/time';
+import type { MetricUnit } from '../../query/promql/unit';
 import { useLatest } from '../useLatest';
 
 export type ChartSeries = { label: string; values: (number | null)[] };
-export type Unit = 'seconds' | 'ratio' | 'rps' | 'percent' | 'bytes' | 'count';
+export type Unit = MetricUnit;
 
 type Props = {
   times: number[];
@@ -25,14 +26,19 @@ export function seriesColor(label: string, index: number): { stroke: string; das
   return [{ stroke: '#E8E2D6' }, { stroke: '#F2A541' }, { stroke: '#6B7480' }, { stroke: '#C9C3B6', dash: [4, 3] }][index % 4] as { stroke: string; dash?: number[] };
 }
 
+// An error ratio lives below 10%; rounding it to whole percents draws a moving line on a flat 0% axis.
+function formatPercent(p: number): string {
+  return p !== 0 && Math.abs(p) < 10 ? `${+p.toFixed(1)}%` : `${Math.round(p)}%`;
+}
+
 export function formatValue(v: number, unit: Unit): string {
   if (!Number.isFinite(v)) return '';
   switch (unit) {
     case 'seconds': return v >= 1 ? `${+v.toFixed(1)}s` : `${Math.round(v * 1000)}ms`;
-    case 'ratio': return `${Math.round(v * 100)}%`;
-    case 'percent': return `${Math.round(v)}%`;
+    case 'ratio': return formatPercent(v * 100);
+    case 'percent': return formatPercent(v);
     case 'bytes': return v >= 1 << 30 ? `${+(v / (1 << 30)).toFixed(1)}G` : `${Math.round(v / (1 << 20))}M`;
-    case 'rps': return v >= 10 ? `${Math.round(v)}/s` : `${+v.toFixed(1)}/s`;
+    case 'rps': return v >= 10 ? `${Math.round(v)}/s` : v >= 1 ? `${+v.toFixed(1)}/s` : `${+v.toFixed(2)}/s`;
     case 'count': return `${Math.round(v)}`;
   }
 }

@@ -4,13 +4,16 @@ import { hashSeed } from '../../engine/random';
 import { blameTerms, reviewPostmortem } from '../../engine/rubric';
 import { clockLabel } from '../../engine/time';
 import { useI18n } from '../../i18n/i18n';
+import { affectedUsers } from '../../telemetry/requests';
 import type { Session } from '../session/useCaseSession';
 
 const ACTION_TYPES: ActionItemType[] = ['prevent', 'detect', 'mitigate', 'process'];
 
 export function PostmortemSheet({ session, onSubmit }: { session: Session; onSubmit: () => void }) {
   const { t, format } = useI18n();
-  const { data, context, postmortem: pm, setPostmortem, seed, pulse } = session;
+  const { data, context, postmortem: pm, setPostmortem, seed } = session;
+  const endedAt = context.stableAt ?? context.clock;
+  const usersAffected = useMemo(() => affectedUsers({ data, seed, mitigations: context.mitigations }, endedAt), [data, seed, context.mitigations, endedAt]);
   const [reviewed, setReviewed] = useState(false);
   const [selfChecks, setSelfChecks] = useState<Record<string, boolean>>({});
   const set = (patch: Partial<Postmortem>) => setPostmortem({ ...pm, ...patch });
@@ -53,7 +56,7 @@ export function PostmortemSheet({ session, onSubmit }: { session: Session; onSub
 
         <h2>{t('pm.impact')}</h2>
         <p className="muted" style={{ fontSize: 13.5 }}>
-          {t('pm.impactFacts', { minutes: (context.stableAt ?? context.clock) - data.page.at, users: format(pulse?.affectedUsers ?? 0) })}
+          {t('pm.impactFacts', { minutes: endedAt - data.page.at, users: format(usersAffected) })}
         </p>
         <textarea rows={2} value={pm.impact} onChange={(e) => set({ impact: e.target.value })} aria-label={t('pm.impact')} />
 

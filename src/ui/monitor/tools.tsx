@@ -4,6 +4,7 @@ import type { ToolName } from '../../engine/case-schema';
 import { clockLabel, clockLabelSeconds } from '../../engine/time';
 import type { ToolError, ToolRequest, ToolResponse } from '../../engine/tools';
 import { useI18n } from '../../i18n/i18n';
+import { metricUnit } from '../../query/promql/unit';
 import type { Span } from '../../telemetry/otel';
 import type { MetricVocabulary } from '../../telemetry/source';
 import type { Session } from '../session/useCaseSession';
@@ -76,14 +77,6 @@ function NowValues({ panel, unit, title }: { panel: { result: { series: { labels
   );
 }
 
-function guessUnit(query: string): Unit {
-  if (/histogram_quantile|_seconds(?!_count)/.test(query)) return 'seconds';
-  if (/cpu_utilization|_ratio/.test(query) && !/rate\(/.test(query)) return 'ratio';
-  if (/_bytes/.test(query)) return 'bytes';
-  if (/rate\(/.test(query)) return 'rps';
-  return 'count';
-}
-
 export function MetricsTool({ session, run, busy, last, pin, vocabulary, draft, setDraft }: ToolProps) {
   const { t } = useI18n();
   const cost = session.data.tools.costs.metrics;
@@ -105,10 +98,10 @@ export function MetricsTool({ session, run, busy, last, pin, vocabulary, draft, 
           </div>
           <MetricsPanel
             title={r.data.panel.query.slice(0, 70)}
-            unit={guessUnit(r.data.panel.query)}
+            unit={metricUnit(r.data.panel.query)}
             panel={r.data.panel}
             height={170}
-            onPin={(from, to) => r.data.tool === 'metrics' && pin(metricPin(r.data.panel, from, to, guessUnit(r.data.panel.query), r.data.panel.query.slice(0, 64), sourceOf(session, last, 'metrics')))}
+            onPin={(from, to) => r.data.tool === 'metrics' && pin(metricPin(r.data.panel, from, to, metricUnit(r.data.panel.query), r.data.panel.query.slice(0, 64), sourceOf(session, last, 'metrics')))}
           />
         </div>
       )}

@@ -38,7 +38,8 @@ export function Debrief({ session, reducedMotion, onReplay, onReset }: Props) {
     { at: context.ackAt ?? data.page.at, text: t('debrief.path.ack'), kind: 'event', useful: false },
     ...report.queries.map((q) => {
       const entry = context.queries.find((e) => e.id === q.id);
-      return { at: q.ranAt, text: `Q-${String(q.id).padStart(2, '0')} ${t(`tool.${q.tool}`)} −${q.costMin}′ ${q.useful ? '' : `· ${t('debrief.detour')}`}`, kind: 'query', useful: q.useful, detail: entry?.request.tool === 'metrics' ? entry.request.query : entry?.request.tool === 'logs' || entry?.request.tool === 'traces' ? entry.request.filter : undefined };
+      const note = q.useful ? '' : `· ${t(q.afterStable ? 'debrief.afterStable' : 'debrief.detour')}`;
+      return { at: q.ranAt, text: `Q-${String(q.id).padStart(2, '0')} ${t(`tool.${q.tool}`)} −${q.costMin}′ ${note}`, kind: 'query', useful: q.useful || q.afterStable, detail: entry?.request.tool === 'metrics' ? entry.request.query : entry?.request.tool === 'logs' || entry?.request.tool === 'traces' ? entry.request.filter : undefined };
     }),
     ...context.mitigations.map((m) => ({ at: m.startedAt, text: t(`case.mitigation.${m.id}.title`), kind: 'mitigation', useful: m.id === data.solution.mitigation })),
     ...context.statusUpdates.map((u) => ({ at: u.sentAt, text: t('debrief.path.status'), kind: 'status', useful: true })),
