@@ -177,3 +177,8 @@ export function affectedUsers(s: Scenario, untilMinute: number): number {
   return Math.round(bad * s.data.impact.uniqueUserRatio);
 }
 
+
+export function affectedUsersInMinute(s: Scenario, minute: number): number {
+  const a = aggregateMinute(s, minute);
+  return Math.round(a.badRequests * a.scale * s.data.impact.uniqueUserRatio);
+}

@@ -1,6 +1,6 @@
 import { isAlertFiring } from '../engine/tools';
 import type { Scenario } from '../engine/state';
-import { aggregateMinute, affectedUsers, LATENCY_BUCKETS_S } from './requests';
+import { aggregateMinute, affectedUsers, affectedUsersInMinute, LATENCY_BUCKETS_S } from './requests';
 import { cpuAt } from './metrics';
 
 export type ComponentPulse = { errorRatio: number; slowRatio: number; load: number };
@@ -9,6 +9,7 @@ export type Pulse = {
   now: number;
   alertFiring: boolean;
   affectedUsers: number;
+  affectedLastMinute: number;
   components: Record<string, ComponentPulse>;
   calls: Record<string, CallPulse>;
 };
@@ -58,5 +59,5 @@ export function pulseAt(s: Scenario, now: number): Pulse {
       calls[call.id] = { failRatio: attempts ? failed / attempts : 0, rps: attempts / (60 * Math.max(1, aggregates.length)) };
     }
   }
-  return { now, alertFiring: isAlertFiring(s, now), affectedUsers: affectedUsers(s, now), components, calls };
+  return { now, alertFiring: isAlertFiring(s, now), affectedUsers: affectedUsers(s, now), affectedLastMinute: affectedUsersInMinute(s, now), components, calls };
 }

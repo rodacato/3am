@@ -6,6 +6,8 @@ import type { IncidentContext, QueryLogEntry } from '../src/engine/incident-mach
 import { reportMethod } from '../src/engine/scoring';
 import { runTool } from '../src/engine/tools';
 import { metricUnit } from '../src/query/promql/unit';
+import { pulseAt } from '../src/telemetry/pulse';
+import { affectedUsers } from '../src/telemetry/requests';
 import { loadAllCases, scenario } from './helpers';
 
 let case01: CaseData;
@@ -100,5 +102,24 @@ describe('postmortem rubric', () => {
     const checks = reviewStatusUpdate('r.ibarra is rolling back the 03:03 config. 7% of orders slow. Next update 03:50.', terms, casePeople(case01));
     expect(checks.find((c) => c.id === 'status.blameless')?.passed).toBe(true);
     expect(checks.find((c) => c.id === 'status.namesPerson')?.kind).toBe('self');
+  });
+});
+
+describe('phone pulse', () => {
+  it('reports new affected users from the data, consistent with the running total', () => {
+    const s = scenario(case01);
+    const at = case01.page.at;
+    const pulse = pulseAt(s, at);
+    expect(pulse.affectedLastMinute).toBeGreaterThan(0);
+    expect(Math.abs(pulse.affectedLastMinute - (affectedUsers(s, at) - affectedUsers(s, at - 1)))).toBeLessThanOrEqual(1);
+  });
+
+  it('once the rollback lands, the minute count drops even though the total keeps its history', () => {
+    const at = case01.page.at;
+    const reverted = scenario(case01, 1, [{ id: 'revert-cfg-413', startedAt: at, effectiveAt: at + 5 }]);
+    const later = pulseAt(reverted, at + 15);
+    expect(later.alertFiring).toBe(false);
+    expect(later.affectedLastMinute).toBeLessThan(pulseAt(scenario(case01), at + 15).affectedLastMinute / 5);
+    expect(later.affectedUsers).toBeGreaterThan(pulseAt(reverted, at).affectedUsers);
   });
 });
