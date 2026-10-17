@@ -44,8 +44,8 @@ A seven-step walkthrough of the desk opens on the first visit and comes back fro
 | `npm test` | Vitest: determinism, signal agreement, mitigations, PromQL, machine, OTLP, worker boundary, solvability |
 | `npm run check:i18n` | Fails on any key missing in any locale or referenced by case data |
 | `npm run check:solvable` | A scripted investigator must close every case within budget, for five seeds |
-| `npm run e2e:smoke` | Builds, then the one `@smoke` Playwright test (progress survives a reload) |
-| `npm run e2e` | Builds, then every Playwright test: case 01 from page to debrief in both locales, worker vs Node log counts, reduced motion |
+| `npm run e2e:smoke` | Builds, then the `@smoke` tests: boot, page and a first query in both locales with no console errors, progress across a reload, the walkthrough shown once |
+| `npm run e2e` | Builds, then every Playwright test: the smoke set, case 01 from page to debrief in both locales, the walkthrough, and the other paths a reader takes (a wrong mitigation first, answering the stakeholder, traces, a dragged metrics range, runbooks, switching language mid-case, other seeds, replay, erase, a narrow window), plus worker vs Node log counts and reduced motion |
 | `npm run build` | Typecheck and build to `dist/` with relative paths (GitHub Pages and iframes) |
 | `npm run demo` | Rebuilds and records `docs/media/demo.mp4` and `demo.gif` (needs `ffmpeg`) |
 
