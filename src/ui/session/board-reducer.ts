@@ -56,6 +56,7 @@ export function boardReducer(board: Board, action: BoardAction): Board {
     case 'status':
       return { ...board, hypotheses: board.hypotheses.map((h) => (h.id === action.id ? { ...h, status: action.status } : h)) };
     case 'tie':
+      if (!board.pins.some((p) => p.id === action.pinId)) return board;
       return {
         ...board,
         hypotheses: board.hypotheses.map((h) => {
