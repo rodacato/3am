@@ -106,4 +106,14 @@ describe('OTLP export', () => {
     expect(timeoutLogs.length).toBeGreaterThan(0);
     for (const l of timeoutLogs) expect(traceIds.has(l.traceId as string)).toBe(true);
   });
+
+  it('exports histograms whose buckets add up to their count', () => {
+    const out = exportIncident(scenario(case01, 1), case01.historyFrom + 100, case01.historyFrom + 105);
+    type Point = { count: string; bucketCounts: string[] };
+    const points = out.metrics.resourceMetrics.flatMap((r) => r.scopeMetrics.flatMap((sc) => sc.metrics))
+      .flatMap((m) => ((m as { histogram?: { dataPoints: Point[] } }).histogram?.dataPoints ?? []));
+    expect(points.length).toBeGreaterThan(0);
+    const mismatched = points.filter((p) => p.bucketCounts.reduce((a, b) => a + Number(b), 0) !== Number(p.count));
+    expect(mismatched).toEqual([]);
+  });
 });
