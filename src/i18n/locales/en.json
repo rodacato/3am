@@ -155,6 +155,7 @@
   "error.filter.negated_key": "A minus only excludes words; a filter key can't be negated.",
   "error.missing.dashboard": "No such dashboard.",
   "error.missing.trace": "That trace is gone.",
+  "error.missing.runbook": "No such runbook.",
   "rubric.blameTerms": "fault|blame|careless|carelessness|negligent|negligence|should have|human error|incompetent|sloppy|stupid|culpa|descuido|negligente|debió|error humano|torpe",
   "rubric.status.impact": "Includes at least one number (how bad it is).",
   "rubric.status.nextUpdate": "Includes a time or a delay (when you will write again).",

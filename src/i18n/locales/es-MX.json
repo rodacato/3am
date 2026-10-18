@@ -155,6 +155,7 @@
   "error.filter.negated_key": "El menos solo excluye palabras; una llave del filtro no se puede negar.",
   "error.missing.dashboard": "No existe ese tablero.",
   "error.missing.trace": "Esa traza ya no está.",
+  "error.missing.runbook": "No existe ese runbook.",
   "rubric.blameTerms": "culpa|culpable|descuido|descuidado|negligente|negligencia|debió|debería haber|error humano|incompetente|torpe|fault|blame|careless|negligent|should have|human error|sloppy",
   "rubric.status.impact": "Incluye al menos un número (qué tan grave es).",
   "rubric.status.nextUpdate": "Incluye una hora o un plazo (cuándo vuelves a escribir).",

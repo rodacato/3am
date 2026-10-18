@@ -165,6 +165,7 @@ export function runTool(s: Scenario, now: number, request: ToolRequest): ToolRes
       case 'changes':
         return done({ tool: 'changes', changes: timedChanges(s).filter((c) => c.at <= now).sort((a, b) => b.at - a.at) });
       case 'runbook':
+        if (!s.data.tools.runbooks.some((b) => b.id === request.runbook)) return { ok: false, costMin: 0, ranAt: now, error: { kind: 'missing', code: 'runbook', detail: request.runbook } };
         return done({ tool: 'runbook', runbook: request.runbook });
       case 'map':
         return done({ tool: 'map' });
