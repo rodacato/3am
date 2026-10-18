@@ -35,6 +35,8 @@ function Sparkline({ values, highlight }: { values: number[]; highlight: [number
   );
 }
 
+const fromButton = (e: { target: EventTarget }) => (e.target as HTMLElement).closest('button') !== null;
+
 function Slip({ pin, containerRef, dispatch, selected, onSelect }: { pin: Pin; containerRef: RefObject<HTMLDivElement | null>; dispatch: Props['dispatch']; selected: boolean; onSelect: () => void }) {
   const { t } = useI18n();
   const { position, handlers } = useDrag(containerRef, pin.x, pin.y, (x, y) => dispatch({ type: 'move', id: pin.id, x, y }));
@@ -47,8 +49,8 @@ function Slip({ pin, containerRef, dispatch, selected, onSelect }: { pin: Pin; c
       aria-label={t('board.slipLabel', { line: pin.lines[0] ?? '' })}
       style={{ left: `min(${position.x * 100}%, calc(100% - 210px))`, top: `${position.y * 100}%`, rotate: `${pin.rot}deg` }}
       {...handlers}
-      onPointerUp={() => { if (!handlers.onPointerUp()) onSelect(); }}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onSelect(); }}
+      onPointerUp={(e) => { if (!handlers.onPointerUp() && !fromButton(e)) onSelect(); }}
+      onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && !fromButton(e)) onSelect(); }}
     >
       <span className="tape" />
       <span data-anchor={`pin-${pin.id}`} style={{ position: 'absolute', right: 12, top: 10, width: 1, height: 1 }} />
@@ -58,7 +60,7 @@ function Slip({ pin, containerRef, dispatch, selected, onSelect }: { pin: Pin; c
       </div>
       {pin.lines.map((line, i) => <div key={i} className="slip__line" title={line}>{line}</div>)}
       {pin.sparkline && <Sparkline values={pin.sparkline} highlight={pin.highlight} />}
-      <button className="slip__x" onClick={() => dispatch({ type: 'unpin', pinId: pin.id })} aria-label={t('board.unpin')}>×</button>
+      <button className="slip__x" onClick={() => { if (selected) onSelect(); dispatch({ type: 'unpin', pinId: pin.id }); }} aria-label={t('board.unpin')}>×</button>
     </div>
   );
 }
