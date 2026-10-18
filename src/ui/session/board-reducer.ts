@@ -47,6 +47,7 @@ export function boardReducer(board: Board, action: BoardAction): Board {
         hypotheses: board.hypotheses.map((h) => (h.id === action.id ? { ...h, x: action.x, y: action.y } : h)),
       };
     case 'hypothesis': {
+      if (board.hypotheses.some((h) => h.id === action.hypothesis.id)) return board;
       const [x, y] = freeSlot(board.hypotheses, HYPOTHESIS_SLOTS);
       return { ...board, hypotheses: [...board.hypotheses, { ...action.hypothesis, x, y, pins: [], status: 'open' }] };
     }

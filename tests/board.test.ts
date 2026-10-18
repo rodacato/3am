@@ -29,3 +29,11 @@ describe('metric pins', () => {
     expect(id).toMatch(/^[\w-]+$/);
   });
 });
+
+describe('hypotheses', () => {
+  it('ignores one whose id is already on the board, as pins do', () => {
+    const add = { type: 'hypothesis' as const, hypothesis: { id: 'h1', text: 'retries', accuses: null } };
+    const board = boardReducer(boardReducer({ pins: [], hypotheses: [] }, add), add);
+    expect(board.hypotheses).toHaveLength(1);
+  });
+});
