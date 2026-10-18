@@ -11,7 +11,7 @@ Supported:
 | Feature | Example |
 | --- | --- |
 | Instant selectors with label matchers `=`, `!=`, `=~`, `!~` | `http_client_requests_total{service="checkout-api", outcome=~"timeout\|error"}` |
-| Range selectors (`s`, `m`, `h`) inside `rate` / `increase` | `rate(http_server_requests_total[5m])` |
+| Range selectors (`s`, `m`, `h`) inside `rate` / `increase`, in whole minutes (series are one sample per minute) | `rate(http_server_requests_total[5m])` |
 | `rate`, `increase` | `increase(http_client_requests_total{outcome="timeout"}[10m])` |
 | `histogram_quantile` over `_bucket` series | `histogram_quantile(0.99, sum by (le) (rate(http_server_request_duration_seconds_bucket{service="checkout-api"}[5m])))` |
 | Aggregations `sum`, `avg`, `min`, `max`, `count`, with `by (…)` or `without (…)` | `sum by (status_class) (rate(http_server_requests_total[5m]))` |

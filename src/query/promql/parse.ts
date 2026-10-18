@@ -82,7 +82,7 @@ export function parsePromQL(query: string): Expr {
         const range = node.getChild('NumberDurationLiteralInDurationContext');
         if (!vector || !range) throw new PromQLError('syntax', text(node), node.from);
         const rangeMin = parseDurationMinutes(text(range));
-        if (rangeMin === null || rangeMin < 1) throw new PromQLError('unsupported_feature', text(range), range.from);
+        if (rangeMin === null || rangeMin < 1 || !Number.isInteger(rangeMin)) throw new PromQLError('unsupported_feature', text(range), range.from);
         return { type: 'matrix', selector: selector(vector), rangeMin };
       }
       case 'FunctionCall': {
