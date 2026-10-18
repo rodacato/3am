@@ -85,6 +85,8 @@ describe('honest errors for what the subset does not do', () => {
     ['quantile(0.9, cpu)', 'unsupported_aggregation:quantile'],
     ['predict_linear(cpu[1h], 3600)', 'unsupported_function:predict_linear'],
     ['rate(reqs_total[5m:1m])', 'unsupported_feature:subquery'],
+    ['rate(reqs_total[90s])', 'unsupported_feature:90s'],
+    ['increase(reqs_total[1m30s])', 'unsupported_feature:1m30s'],
     ['reqs_total and cpu', 'unsupported_feature:and'],
     ['cpu > bool 0.3', 'unsupported_feature:bool'],
     ['reqs_total / on(service) cpu', 'unsupported_feature:on(service)'],
