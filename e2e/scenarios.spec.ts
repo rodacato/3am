@@ -90,6 +90,26 @@ test('metrics: an error fraction is drawn as a percentage and a dragged range be
   await expect(page.locator('.slip')).not.toContainText('/s');
 });
 
+test('taking a slip down never leaves a selection pointing at it', async ({ page }) => {
+  await freshStart(page, 'en');
+  await startShift(page, en);
+  await page.getByRole('tab', { name: en.ui('monitor.tab.changes') }).click();
+  await page.getByRole('button', { name: new RegExp(en.ui('changes.pull').split(' · ')[0] as string) }).click();
+  const tears = page.locator('.change').getByRole('button', { name: en.ui('monitor.tear') });
+  await tears.nth(0).click();
+  await tears.nth(1).click();
+  const slips = page.locator('.slip');
+  await expect(slips.nth(1)).toHaveAttribute('aria-pressed', 'true');
+
+  await slips.nth(0).getByRole('button', { name: en.ui('board.unpin') }).click();
+  await expect(slips).toHaveCount(1);
+  await expect(slips.first(), 'the selected slip stays selected').toHaveAttribute('aria-pressed', 'true');
+
+  await slips.first().getByRole('button', { name: en.ui('board.unpin') }).click();
+  await expect(slips).toHaveCount(0);
+  await expect(page.locator('.glass__hint'), 'no tie hint for a slip that is gone').toHaveCount(0);
+});
+
 test('a runbook page can be torn off and the language can change mid-case without losing the night', async ({ page }) => {
   await freshStart(page, 'en');
   await startShift(page, en);
