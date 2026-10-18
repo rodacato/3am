@@ -152,6 +152,7 @@
   "error.filter.unknown_key": "Unknown filter key.",
   "error.filter.bad_value": "That value doesn't fit the key.",
   "error.filter.unclosed_quote": "A quote never closed.",
+  "error.filter.negated_key": "A minus only excludes words; a filter key can't be negated.",
   "error.missing.dashboard": "No such dashboard.",
   "error.missing.trace": "That trace is gone.",
   "rubric.blameTerms": "fault|blame|careless|carelessness|negligent|negligence|should have|human error|incompetent|sloppy|stupid|culpa|descuido|negligente|debió|error humano|torpe",

@@ -44,7 +44,7 @@ Space-separated terms, all of which must match. Default window: the last 30 minu
 | `service:checkout-api` | only this service (repeat for several) |
 | `level:warn` / `level:warn+` | exactly this severity / this severity or worse |
 | `"timed out"` or `retry` | body contains the text, case-insensitive |
-| `-healthz` | body does not contain the text |
+| `-healthz` | body does not contain the text (only text negates; `-service:` is an error) |
 | `trace:7f3a` | trace id starts with |
 | `since:45m` | window ending at the clock |
 | `from:03:00 to:03:20` | explicit window |

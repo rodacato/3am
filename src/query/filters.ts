@@ -1,7 +1,7 @@
 import type { Severity } from '../engine/case-schema';
 import { parseDurationMinutes } from '../engine/time';
 
-export type FilterErrorCode = 'unknown_key' | 'bad_value' | 'unclosed_quote';
+export type FilterErrorCode = 'unknown_key' | 'bad_value' | 'unclosed_quote' | 'negated_key';
 
 export class FilterError extends Error {
   constructor(readonly code: FilterErrorCode, readonly detail: string) {
@@ -34,6 +34,7 @@ function tokenize(input: string): Token[] {
       value = input.slice(i, end === -1 ? input.length : end);
       i = end === -1 ? input.length : end;
     }
+    if (negated && key) throw new FilterError('negated_key', `-${key}:${value}`);
     tokens.push({ key, value, negated });
   }
   return tokens;
