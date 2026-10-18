@@ -10,7 +10,8 @@ import type { MetricVocabulary } from '../../telemetry/source';
 import type { Session } from '../session/useCaseSession';
 import { changePin, describeChange, labelText, logPin, metricPin, runbookPin, spanPin, type PinInput, type PinSource } from './pins';
 import { PromQLEditor } from './PromQLEditor';
-import { formatValue, seriesColor, TimeChart, type Unit } from './TimeChart';
+import { formatValue, type Unit } from './format';
+import { seriesColor, TimeChart } from './TimeChart';
 
 export type RunResult = { id: number; response: ToolResponse };
 

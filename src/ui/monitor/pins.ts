@@ -1,9 +1,10 @@
 import type { Pin } from '../../engine/board';
 import type { Change, ToolName } from '../../engine/case-schema';
+import { hashSeed } from '../../engine/random';
 import { clockLabel, clockLabelSeconds } from '../../engine/time';
 import { logEvidenceKey, spanEvidenceKey, type MetricsResult } from '../../engine/tools';
 import type { LogRecord, Span } from '../../telemetry/otel';
-import { formatValue, type Unit } from './TimeChart';
+import { formatValue, type Unit } from './format';
 
 export type PinInput = Omit<Pin, 'x' | 'y' | 'rot'>;
 export type PinSource = { tool: ToolName; queryId: number; ranAt: number; costMin: number };
@@ -34,7 +35,7 @@ export function metricPin(panel: MetricsResult, fromMin: number, toMin: number, 
   const inRange = values.slice(fromIdx, toIdx + 1);
   const peak = inRange.length ? Math.max(...inRange) : 0;
   return {
-    id: `metric-${source.queryId}-${fromMin}-${toMin}`,
+    id: `metric-${source.queryId}-${hashSeed(panel.query).toString(36)}-${fromMin}-${toMin}`,
     kind: 'metric',
     evidence: panel.evidence,
     lines: [title, `${clockLabel(fromMin)}–${clockLabel(toMin)} · max ${formatValue(peak, unit)}${first && labelText(first.labels) ? ` · ${labelText(first.labels)}` : ''}`],
