@@ -36,4 +36,9 @@ describe('hypotheses', () => {
     const board = boardReducer(boardReducer({ pins: [], hypotheses: [] }, add), add);
     expect(board.hypotheses).toHaveLength(1);
   });
+
+  it('refuses to tie a slip that is not on the board, so the piece count stays honest', () => {
+    const board = boardReducer({ pins: [], hypotheses: [] }, { type: 'hypothesis', hypothesis: { id: 'h1', text: 'retries', accuses: null } });
+    expect(boardReducer(board, { type: 'tie', hypothesisId: 'h1', pinId: 'gone' }).hypotheses[0]?.pins).toEqual([]);
+  });
 });
