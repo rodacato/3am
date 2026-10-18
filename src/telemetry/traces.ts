@@ -1,6 +1,6 @@
-import type { Scenario } from '../engine/state';
+import { systemStateAt, type Scenario } from '../engine/state';
 import type { Span } from './otel';
-import { requestsInMinute, simulateRequest } from './requests';
+import { requestsInMinute, sampleCount, simulateRequest } from './requests';
 
 export type TraceSummary = {
   ref: string;
@@ -26,8 +26,10 @@ export type TraceCriteria = {
 
 // A trace ref (minute:index) is enough to rebuild the trace exactly, so nothing has to be stored.
 export function traceByRef(s: Scenario, ref: string): Span[] | null {
-  const [minute, index] = ref.split(':').map(Number);
-  if (minute === undefined || index === undefined || Number.isNaN(minute) || Number.isNaN(index)) return null;
+  const match = /^(-?\d+):(\d+)$/.exec(ref);
+  if (!match) return null;
+  const [minute, index] = [Number(match[1]), Number(match[2])];
+  if (minute < s.data.historyFrom || index >= sampleCount(systemStateAt(s, minute)).sampled) return null;
   return simulateRequest(s, minute, index, true).spans;
 }
 
