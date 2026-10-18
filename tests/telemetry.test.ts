@@ -3,6 +3,7 @@ import type { CaseData } from '../src/engine/case-schema';
 import { runTool } from '../src/engine/tools';
 import { logsInMinute } from '../src/telemetry/logs';
 import { aggregateMinute, requestsInMinute } from '../src/telemetry/requests';
+import { traceByRef } from '../src/telemetry/traces';
 import { loadAllCases, scenario } from './helpers';
 
 let case01: CaseData;
@@ -74,5 +75,17 @@ describe('signal agreement', () => {
     const s = scenario(case01);
     const spans = [...requestsInMinute(s, 196, true)].flatMap((r) => r.spans.filter((sp) => sp.name === 'payment.authorize'));
     expect(aggregateMinute(s, 196).client['checkout.payment']?.histogram.count).toBe(spans.length);
+  });
+});
+
+describe('trace refs', () => {
+  it('rebuilds a sampled request and refuses one the minute never had', () => {
+    const s = scenario(case01);
+    const sampled = [...requestsInMinute(s, 200, false)].length;
+    expect(traceByRef(s, `200:${sampled - 1}`)).not.toBeNull();
+    expect(traceByRef(s, `${case01.historyFrom}:0`), 'history before midnight has negative minutes').not.toBeNull();
+    for (const ref of [`200:${sampled}`, '200:99999', '200:', '200:-1', '200:1.5', `${case01.historyFrom - 1}:0`]) {
+      expect(traceByRef(s, ref), ref).toBeNull();
+    }
   });
 });
