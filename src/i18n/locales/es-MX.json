@@ -152,6 +152,7 @@
   "error.filter.unknown_key": "Llave de filtro desconocida.",
   "error.filter.bad_value": "Ese valor no le queda a la llave.",
   "error.filter.unclosed_quote": "Unas comillas nunca se cerraron.",
+  "error.filter.negated_key": "El menos solo excluye palabras; una llave del filtro no se puede negar.",
   "error.missing.dashboard": "No existe ese tablero.",
   "error.missing.trace": "Esa traza ya no está.",
   "rubric.blameTerms": "culpa|culpable|descuido|descuidado|negligente|negligencia|debió|debería haber|error humano|incompetente|torpe|fault|blame|careless|negligent|should have|human error|sloppy",
