@@ -47,7 +47,9 @@ export type TimeWindow = { sinceMin?: number; from?: number; to?: number };
 function clockToMinute(value: string): number {
   const m = /^(\d{1,2}):(\d{2})$/.exec(value);
   if (!m) throw new FilterError('bad_value', value);
-  return Number(m[1]) * 60 + Number(m[2]);
+  const [hours, minutes] = [Number(m[1]), Number(m[2])];
+  if (hours > 23 || minutes > 59) throw new FilterError('bad_value', value);
+  return hours * 60 + minutes;
 }
 
 function readWindow(t: Token, window: TimeWindow): boolean {

@@ -35,6 +35,14 @@ describe('empty terms', () => {
     expect(errorOf(() => parseLogFilter(input))).toBe(`bad_value:${detail}`);
   });
 
+  it.each(['from:03:75', 'to:24:00', 'from:99:99'])('refuses the clock time in %s', (input) => {
+    expect(errorOf(() => parseLogFilter(input))).toBe(`bad_value:${input.slice(input.indexOf(':') + 1)}`);
+  });
+
+  it('reads a valid window', () => {
+    expect(parseLogFilter('from:03:00 to:23:59').window).toEqual({ from: 180, to: 1439 });
+  });
+
   it('refuses an empty trace operation instead of ignoring it', () => {
     expect(errorOf(() => parseTraceFilter('operation:'))).toBe('bad_value:operation:');
   });
