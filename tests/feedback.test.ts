@@ -127,6 +127,13 @@ describe('phone pulse', () => {
     expect(Math.abs(pulse.affectedLastMinute - (affectedUsers(s, at) - affectedUsers(s, at - 1)))).toBeLessThanOrEqual(1);
   });
 
+  it('a slow threshold above the largest bucket counts only the overflow as slow, not every request', () => {
+    const at = case01.page.at;
+    const slowRatios = (slowMs: number) => Object.values(pulseAt(scenario({ ...case01, impact: { ...case01.impact, slowMs } }), at).components).map((c) => c.slowRatio);
+    const atCase = slowRatios(case01.impact.slowMs);
+    slowRatios(20_000).forEach((ratio, i) => expect(ratio).toBeLessThanOrEqual(atCase[i] as number));
+  });
+
   it('once the rollback lands, the minute count drops even though the total keeps its history', () => {
     const at = case01.page.at;
     const reverted = scenario(case01, 1, [{ id: 'revert-cfg-413', startedAt: at, effectiveAt: at + 5 }]);
