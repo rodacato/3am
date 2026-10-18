@@ -95,6 +95,10 @@ describe('mitigations', () => {
     expect(before(reverted.data.panel.result)).toEqual(before(plain.data.panel.result));
   });
 
+  it('a runbook the case does not have is an error that costs nothing, like a missing dashboard', () => {
+    expect(runTool(scenario(case01), case01.page.at, { tool: 'runbook', runbook: 'nope' })).toMatchObject({ ok: false, costMin: 0, error: { kind: 'missing', code: 'runbook' } });
+  });
+
   it('the alert is quiet before the incident and firing at the page', () => {
     expect(isAlertFiring(scenario(case01), case01.page.at - 60)).toBe(false);
     expect(isAlertFiring(scenario(case01), case01.page.at)).toBe(true);
