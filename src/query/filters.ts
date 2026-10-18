@@ -18,6 +18,7 @@ function tokenize(input: string): Token[] {
   while (i < input.length) {
     while (input[i] === ' ') i++;
     if (i >= input.length) break;
+    const start = i;
     let negated = false;
     if (input[i] === '-') { negated = true; i++; }
     let key: string | null = null;
@@ -34,6 +35,7 @@ function tokenize(input: string): Token[] {
       value = input.slice(i, end === -1 ? input.length : end);
       i = end === -1 ? input.length : end;
     }
+    if (value === '') throw new FilterError('bad_value', input.slice(start, i));
     if (negated && key) throw new FilterError('negated_key', `-${key}:${value}`);
     tokens.push({ key, value, negated });
   }

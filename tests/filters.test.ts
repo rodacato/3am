@@ -24,3 +24,18 @@ describe('negation', () => {
     expect(errorOf(parse)).toBe(`negated_key:${input}`);
   });
 });
+
+describe('empty terms', () => {
+  it.each([
+    ['foo - bar', '-'],
+    ['timeout -', '-'],
+    ['service:', 'service:'],
+    ['level:warn ""', '""'],
+  ])('refuses %s instead of matching nothing', (input, detail) => {
+    expect(errorOf(() => parseLogFilter(input))).toBe(`bad_value:${detail}`);
+  });
+
+  it('refuses an empty trace operation instead of ignoring it', () => {
+    expect(errorOf(() => parseTraceFilter('operation:'))).toBe('bad_value:operation:');
+  });
+});
