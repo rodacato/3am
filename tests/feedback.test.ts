@@ -78,6 +78,12 @@ describe('method report', () => {
     expect(report.queries[0]?.afterStable).toBe(true);
     expect(report.detourMin).toBe(0);
   });
+
+  it('names each matched factor once, as the rubric counts it', () => {
+    const first = case01.factors[0]?.id as string;
+    const pm = { ...EMPTY_POSTMORTEM, factors: [first, first, first] };
+    expect(reportMethod(case01, 1, context([], null), board, pm).factorsNamed.matched).toEqual([first]);
+  });
 });
 
 describe('postmortem rubric', () => {
@@ -92,6 +98,13 @@ describe('postmortem rubric', () => {
 
   it('blame vocabulary still fails, with or without a name', () => {
     expect(item({ ...EMPTY_POSTMORTEM, summary: 'The on-call team should have caught it.' }, 'pm.blameless')).toMatchObject({ passed: false, params: { term: 'should have' } });
+  });
+
+  it('counts each contributing factor once, however often it is listed', () => {
+    const first = case01.factors[0]?.id as string;
+    const pm = { ...EMPTY_POSTMORTEM, factors: case01.factors.map(() => first) };
+    expect(item(pm, 'pm.factorsFound')).toMatchObject({ passed: false, params: { matched: 1 } });
+    expect(item(pm, 'pm.morethanOne')?.passed).toBe(false);
   });
 
   it('asks nothing about names when nobody is named', () => {

@@ -32,14 +32,14 @@ export function reviewPostmortem(data: CaseData, pm: Postmortem, terms: string[]
   const allText = [pm.summary, pm.timeline, pm.impact, pm.customFactor, pm.wentWell, ...actions.map((a) => a.text)].join('\n');
   const blame = findIn(allText, terms);
   const timelineLines = pm.timeline.split('\n').filter((l) => TIME.test(l)).length;
-  const matched = pm.factors.filter((f) => expected.includes(f)).length;
+  const matched = expected.filter((f) => pm.factors.includes(f)).length;
 
   return [
     { id: 'pm.timeline', kind: 'auto', passed: timelineLines >= 3, params: { count: timelineLines } },
     { id: 'pm.impact', kind: 'auto', passed: /\d/.test(pm.impact) },
     { id: 'pm.factorsFound', kind: 'auto', passed: matched === expected.length, params: { matched, expected: expected.length } },
     { id: 'pm.noDistractors', kind: 'auto', passed: !pm.factors.some((f) => distractors.has(f)) },
-    { id: 'pm.morethanOne', kind: 'auto', passed: pm.factors.length + (pm.customFactor.trim() ? 1 : 0) >= 2 },
+    { id: 'pm.morethanOne', kind: 'auto', passed: new Set(pm.factors).size + (pm.customFactor.trim() ? 1 : 0) >= 2 },
     { id: 'pm.blameless', kind: 'auto', passed: blame === null, params: { term: blame ?? '' } },
     { id: 'pm.actionsTyped', kind: 'auto', passed: actions.length >= 2 && actions.every((a) => a.type !== null && a.owner.trim() !== '') },
     { id: 'pm.actionsPrevent', kind: 'auto', passed: actions.some((a) => a.type === 'prevent' || a.type === 'process') },

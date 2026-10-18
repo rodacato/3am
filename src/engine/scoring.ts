@@ -63,9 +63,9 @@ export function reportMethod(data: CaseData, seed: number, context: IncidentCont
     },
     factorsNamed: {
       expected,
-      matched: postmortem.factors.filter((f) => expected.includes(f)),
+      matched: expected.filter((f) => postmortem.factors.includes(f)),
       missed: expected.filter((f) => !postmortem.factors.includes(f)),
-      distractors: postmortem.factors.filter((f) => distractorIds.has(f)),
+      distractors: [...new Set(postmortem.factors)].filter((f) => distractorIds.has(f)),
     },
     mitigationsTried: context.mitigations.map((m) => m.id),
     restartedBeforeLooking: restart !== undefined && restart.startedAt <= firstLook,
