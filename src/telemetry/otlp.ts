@@ -128,7 +128,7 @@ export function exportMetrics(s: Scenario, fromMin: number, toMin: number) {
               timeUnixNano: nanos(minuteToMs(s.data.date, fromMin + i + 1)),
               count: String(Math.round(counts[i] ?? 0)),
               sum: sums[i] ?? 0,
-              bucketCounts: cumulative.map((c, b) => String(Math.round((c[i] ?? 0) - (b ? (cumulative[b - 1]?.[i] ?? 0) : 0)))),
+              bucketCounts: cumulative.map((c, b) => String(Math.round(c[i] ?? 0) - (b ? Math.round(cumulative[b - 1]?.[i] ?? 0) : 0))),
               explicitBounds: [...LATENCY_BUCKETS_S],
             }));
           });
