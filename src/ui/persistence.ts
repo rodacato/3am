@@ -39,8 +39,17 @@ export function migrate(raw: unknown): Stored {
     data = step(data);
     version += 1;
   }
-  return { ...structuredClone(EMPTY), ...(data as Partial<Stored>), version: STORAGE_VERSION };
+  const section = <K extends 'preferences' | 'progress' | 'sessions'>(key: K): Stored[K] =>
+    (isRecord(data[key]) ? data[key] : structuredClone(EMPTY[key])) as Stored[K];
+  const sessions = Object.fromEntries(Object.entries(section('sessions')).filter(([, s]) => isSession(s)));
+  return { version: STORAGE_VERSION, preferences: section('preferences'), progress: section('progress'), sessions };
 }
+
+const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
+
+const isSession = (v: unknown): v is CaseSession =>
+  isRecord(v) && typeof v.seed === 'number' && isRecord(v.board) && Array.isArray(v.board.pins) && Array.isArray(v.board.hypotheses)
+  && isRecord(v.postmortem) && typeof v.statusDraft === 'string';
 
 export function load(): Stored {
   try {
