@@ -22,7 +22,8 @@ export function pulseAt(s: Scenario, now: number): Pulse {
   const aggregates = minutes.map((m) => aggregateMinute(s, m));
   const components: Record<string, ComponentPulse> = {};
   const calls: Record<string, CallPulse> = {};
-  const slowFrom = LATENCY_BUCKETS_S.findIndex((le) => le * 1000 >= s.data.impact.slowMs) + 1;
+  const bound = LATENCY_BUCKETS_S.findIndex((le) => le * 1000 >= s.data.impact.slowMs);
+  const slowFrom = bound === -1 ? LATENCY_BUCKETS_S.length : bound + 1;
 
   for (const c of s.data.components) {
     let count = 0, errors = 0, slow = 0;
