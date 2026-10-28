@@ -1,6 +1,6 @@
 import type { LogTemplate } from '../engine/case-schema';
 import { createRng, type Rng } from '../engine/random';
-import type { Scenario } from '../engine/state';
+import { nightKey, type Scenario } from '../engine/state';
 import { effectShift } from '../engine/jitter';
 import { minuteToMs } from '../engine/time';
 import { SEVERITY_NUMBER, type LogRecord } from './otel';
@@ -51,7 +51,7 @@ const minuteCache = new Map<string, LogRecord[]>();
 
 export function logsInMinute(s: Scenario, minute: number): LogRecord[] {
   const relevant = s.mitigations.filter((m) => m.effectiveAt <= minute + 1).map((m) => `${m.id}:${m.startedAt}`).join(',');
-  const key = `${s.data.id}#${s.seed}|${relevant}|${minute}`;
+  const key = `${nightKey(s)}|${relevant}|${minute}`;
   const cached = minuteCache.get(key);
   if (cached) return cached;
 

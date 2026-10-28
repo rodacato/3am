@@ -64,7 +64,7 @@ export function Debrief({ session, reducedMotion, onReplay, onReset }: Props) {
         <CausalChain data={data} named={named} reducedMotion={reducedMotion} />
         <div className="debrief-grid">
           <section>
-            <p className="muted" style={{ fontSize: 14.5 }}>{t('case.debrief.chainNote')}</p>
+            <p className="muted" style={{ fontSize: 14.5 }}>{t(`case.${data.debriefNoteKey}`)}</p>
             <h2>{t('debrief.why')}</h2>
             <p>{t('debrief.contributing')}</p>
           </section>

@@ -1,19 +1,19 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createActor } from 'xstate';
-import { validateCase, type CaseData } from '../src/engine/case-schema';
+import { caseVariants, resolveVariant, validateCase, type CaseData, type CaseDefinition, type CaseInput } from '../src/engine/case-schema';
 import { incidentMachine, type IncidentInput } from '../src/engine/incident-machine';
 import { checkSolvable } from '../src/engine/solvability';
 import { effectWindow, timedChanges } from '../src/engine/jitter';
 import { aggregateMinute } from '../src/telemetry/requests';
 import { isAlertFiring, observeMitigation, runTool } from '../src/engine/tools';
 import case01Input from '../src/content/cases/case-01/case';
-import { loadAllCases, scenario } from './helpers';
+import { everyNight, loadAllCases, scenario } from './helpers';
 
-let cases: CaseData[];
+let cases: CaseDefinition[];
 let case01: CaseData;
 beforeAll(async () => {
   cases = await loadAllCases();
-  case01 = cases.find((c) => c.id === 'case-01') as CaseData;
+  case01 = resolveVariant(cases.find((c) => c.id === 'case-01') as CaseDefinition, 1);
 });
 
 describe('case validation', () => {
@@ -22,17 +22,73 @@ describe('case validation', () => {
   });
 
   it('rejects dangling references', () => {
-    const broken = structuredClone(case01Input);
+    const broken = singleNight(case01);
     broken.mitigations = [{ id: 'revert-cfg-413', costMin: 5, actions: [{ type: 'revertChange', change: 'cfg-999' }] }];
     expect(() => validateCase(broken)).toThrow(/reverts unknown cfg-999/);
+  });
+
+  it('accepts the shipped case file as written', () => {
+    expect(() => validateCase(case01Input)).not.toThrow();
+  });
+});
+
+// A resolved night written back as a case file without variants.
+function singleNight(data: CaseData): CaseInput {
+  const { variantId: _variant, debriefNoteKey: _note, ...rest } = structuredClone(data);
+  return rest;
+}
+
+describe('variants', () => {
+  const base = (): CaseInput => singleNight(case01);
+  const withVariants = (): CaseInput => ({
+    ...base(),
+    variants: [
+      { id: 'first' },
+      { id: 'second', solution: { ...base().solution!, mitigation: 'restart-checkout' }, debriefNoteKey: 'variant.second.note', logs: [{ id: 'extra', component: 'storefront', severity: 'INFO', body: 'hello', trigger: { kind: 'rate', perMin: 1 } }] },
+    ],
+  });
+
+  it('a case without variants is one implicit variant', () => {
+    const def = validateCase(base());
+    expect(caseVariants(def)).toHaveLength(1);
+    expect(resolveVariant(def, 1)).toBe(resolveVariant(def, 2));
+    expect(resolveVariant(def, 1).debriefNoteKey).toBe('debrief.chainNote');
+  });
+
+  it('the seed picks the variant, seed 1 the first, and the same object comes back every time', () => {
+    const def = validateCase(withVariants());
+    expect([1, 2, 3, 4, 0, -1].map((seed) => resolveVariant(def, seed).variantId)).toEqual(['first', 'second', 'first', 'second', 'second', 'first']);
+    expect(resolveVariant(def, 2)).toBe(resolveVariant(def, 4));
+  });
+
+  it('a variant replaces what it declares, appends its logs and keeps the shared city', () => {
+    const def = validateCase(withVariants());
+    const [first, second] = caseVariants(def) as [CaseData, CaseData];
+    expect(second.solution.mitigation).toBe('restart-checkout');
+    expect(second.debriefNoteKey).toBe('variant.second.note');
+    expect(second.logs.map((l) => l.id)).toEqual([...first.logs.map((l) => l.id), 'extra']);
+    expect(second.components).toEqual(first.components);
+    expect(second.factors).toEqual(first.factors);
+  });
+
+  it('a variant may not change the city', () => {
+    const input = withVariants();
+    input.variants = [{ id: 'first' }, { id: 'loud', budgetMin: 10 } as never];
+    expect(() => validateCase(input)).toThrow();
+  });
+
+  it('names the variant that fails a cross-reference', () => {
+    const input = withVariants();
+    input.variants = [{ id: 'first' }, { id: 'broken', solution: { ...base().solution!, mitigation: 'nope' } }];
+    expect(() => validateCase(input)).toThrow(/variant broken is invalid[\s\S]*solution mitigation nope/);
   });
 });
 
 describe('solvability', () => {
-  it.each([1, 2, 3, 42])('every case closes within budget with seed %i', (seed) => {
-    for (const data of cases) {
+  it('every variant of every case closes within budget, and only with its own fix', () => {
+    for (const { data, seed } of everyNight(cases)) {
       const report = checkSolvable(data, seed);
-      expect(report.problems).toEqual([]);
+      expect(report.problems, `${data.id}/${data.variantId} seed ${seed}`).toEqual([]);
     }
   });
 });
@@ -61,7 +117,7 @@ describe('seeded red herrings', () => {
   });
 
   it('refuses a case that jitters a change its factors depend on', () => {
-    const broken = structuredClone(case01Input);
+    const broken = singleNight(case01);
     broken.changes = broken.changes?.map((c) => (c.id === 'cfg-413' ? { ...c, jitterMin: 5 } : c));
     expect(() => validateCase(broken)).toThrow(/must not jitter/);
   });
@@ -112,7 +168,7 @@ describe('incident lifecycle', () => {
   });
 
   it('walks briefing → paged → investigating → mitigating → stable → postmortem → debrief', () => {
-    for (const data of cases) {
+    for (const data of cases.flatMap(caseVariants)) {
       const actor = createActor(incidentMachine, { input: input(data) }).start();
       const go = (event: Parameters<typeof actor.send>[0]) => { actor.send(event); return actor.getSnapshot(); };
       expect(actor.getSnapshot().value).toBe('briefing');

@@ -43,7 +43,7 @@ export function reportMethod(data: CaseData, seed: number, context: IncidentCont
   const endedAt = context.stableAt ?? context.clock;
   const expected = data.factors.map((f) => f.id);
   const distractorIds = new Set(data.distractorFactors.map((d) => d.id));
-  const restart = context.mitigations.find((m) => data.mitigations.find((d) => d.id === m.id)?.actions.some((a) => a.type === 'restart'));
+  const restart = context.mitigations.find((m) => m.id !== data.solution.mitigation && data.mitigations.find((d) => d.id === m.id)?.actions.some((a) => a.type === 'restart'));
   const firstLook = context.queries[0]?.ranAt ?? Infinity;
 
   return {

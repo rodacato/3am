@@ -4,12 +4,11 @@ import { runTool } from '../src/engine/tools';
 import { logsInMinute } from '../src/telemetry/logs';
 import { aggregateMinute, requestsInMinute } from '../src/telemetry/requests';
 import { traceByRef } from '../src/telemetry/traces';
-import { loadAllCases, scenario } from './helpers';
+import { loadCaseVariant, scenario } from './helpers';
 
 let case01: CaseData;
 beforeAll(async () => {
-  const all = await loadAllCases();
-  case01 = all.find((c) => c.id === 'case-01') as CaseData;
+  case01 = await loadCaseVariant('case-01');
 });
 
 const P99 = 'histogram_quantile(0.99, sum by (le) (rate(http_server_request_duration_seconds_bucket{service="checkout-api"}[5m])))';

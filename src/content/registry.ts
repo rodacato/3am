@@ -1,4 +1,4 @@
-import { validateCase, type CaseData, type CaseInput } from '../engine/case-schema';
+import { validateCase, type CaseDefinition, type CaseInput } from '../engine/case-schema';
 
 // Each case is its own chunk: nothing loads until a reader opens that case.
 const caseModules = import.meta.glob<{ default: CaseInput }>('./cases/*/case.ts');
@@ -8,9 +8,9 @@ const idFromPath = (path: string) => path.split('/')[2] ?? '';
 
 export const CASE_IDS: readonly string[] = Object.keys(caseModules).map(idFromPath).sort();
 
-const loaded = new Map<string, Promise<CaseData>>();
+const loaded = new Map<string, Promise<CaseDefinition>>();
 
-export function loadCase(caseId: string): Promise<CaseData> {
+export function loadCase(caseId: string): Promise<CaseDefinition> {
   let pending = loaded.get(caseId);
   if (!pending) {
     const load = caseModules[`./cases/${caseId}/case.ts`];
