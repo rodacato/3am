@@ -84,12 +84,11 @@ describe('variants', () => {
   });
 });
 
+const nights = everyNight(await loadAllCases()).map((n) => ({ ...n, name: `${n.data.id}/${n.data.variantId}` }));
+
 describe('solvability', () => {
-  it('every variant of every case closes within budget, and only with its own fix', () => {
-    for (const { data, seed } of everyNight(cases)) {
-      const report = checkSolvable(data, seed);
-      expect(report.problems, `${data.id}/${data.variantId} seed ${seed}`).toEqual([]);
-    }
+  it.each(nights)('$name closes within budget with seed $seed, and only with its own fix', ({ data, seed }) => {
+    expect(checkSolvable(data, seed).problems).toEqual([]);
   });
 });
 

@@ -210,6 +210,7 @@ export type CaseData = z.infer<typeof caseSchema>;
 export type CaseDefinition = z.infer<typeof caseDefinitionSchema>;
 export type CaseInput = z.input<typeof caseDefinitionSchema>;
 export type Variant = z.infer<typeof variantSchema>;
+export type VariantInput = z.input<typeof variantSchema>;
 export type Component = z.infer<typeof componentSchema>;
 export type Call = z.infer<typeof callSchema>;
 export type Change = z.infer<typeof changeSchema>;
