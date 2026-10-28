@@ -8,11 +8,11 @@ import { runTool } from '../src/engine/tools';
 import { metricUnit } from '../src/query/promql/unit';
 import { pulseAt } from '../src/telemetry/pulse';
 import { affectedUsers } from '../src/telemetry/requests';
-import { loadAllCases, scenario } from './helpers';
+import { loadCaseVariant, scenario } from './helpers';
 
 let case01: CaseData;
 beforeAll(async () => {
-  case01 = (await loadAllCases()).find((c) => c.id === 'case-01') as CaseData;
+  case01 = await loadCaseVariant('case-01');
 });
 
 describe('metric units', () => {
@@ -83,6 +83,13 @@ describe('method report', () => {
     const first = case01.factors[0]?.id as string;
     const pm = { ...EMPTY_POSTMORTEM, factors: [first, first, first] };
     expect(reportMethod(case01, 1, context([], null), board, pm).factorsNamed.matched).toEqual([first]);
+  });
+
+  it('a restart before looking is called out, unless the restart is the fix', () => {
+    const restarted = { ...context([query({ tool: 'changes' }, at() + 6)], null), mitigations: [{ id: 'restart-checkout', startedAt: at(), effectiveAt: at() + 4 }] };
+    expect(reportMethod(case01, 1, restarted, board, EMPTY_POSTMORTEM).restartedBeforeLooking).toBe(true);
+    const restartIsTheFix = { ...case01, solution: { ...case01.solution, mitigation: 'restart-checkout' } };
+    expect(reportMethod(restartIsTheFix, 1, restarted, board, EMPTY_POSTMORTEM).restartedBeforeLooking).toBe(false);
   });
 });
 

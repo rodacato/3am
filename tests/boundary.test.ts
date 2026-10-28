@@ -1,15 +1,17 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import type { CaseData } from '../src/engine/case-schema';
+import { caseVariants, resolveVariant, type CaseData, type CaseDefinition } from '../src/engine/case-schema';
 import { runTool } from '../src/engine/tools';
 import { exportIncident } from '../src/telemetry/otlp';
 import { handleRequest } from '../src/worker/handle';
 import type { WorkerRequest } from '../src/worker/protocol';
 import { loadAllCases, scenario } from './helpers';
 
+let def01: CaseDefinition;
 let case01: CaseData;
 beforeAll(async () => {
-  case01 = (await loadAllCases()).find((c) => c.id === 'case-01') as CaseData;
+  def01 = (await loadAllCases()).find((c) => c.id === 'case-01') as CaseDefinition;
+  case01 = resolveVariant(def01, 1);
 });
 
 describe('worker boundary', () => {
@@ -17,9 +19,18 @@ describe('worker boundary', () => {
 
   it('answers exactly what the engine answers, and survives structured cloning', async () => {
     const body: WorkerRequest = { kind: 'tool', scenario: ref, now: 205, request: { tool: 'logs', filter: 'service:checkout-api level:warn+' } };
-    const viaWorker = await handleRequest(body, async () => case01);
-    const direct = runTool(scenario(case01, 5), 205, { tool: 'logs', filter: 'service:checkout-api level:warn+' });
+    const viaWorker = await handleRequest(body, async () => def01);
+    const direct = runTool(scenario(resolveVariant(def01, 5), 5), 205, { tool: 'logs', filter: 'service:checkout-api level:warn+' });
     expect(structuredClone(viaWorker)).toEqual(direct);
+  });
+
+  it('plays the variant the seed picks, for every variant', async () => {
+    const variants = caseVariants(def01);
+    for (let seed = 1; seed <= variants.length * 2; seed++) {
+      const body: WorkerRequest = { kind: 'tool', scenario: { caseId: 'case-01', seed, mitigations: [] }, now: case01.page.at, request: { tool: 'changes' } };
+      const viaWorker = await handleRequest(body, async () => def01);
+      expect(viaWorker).toEqual(runTool(scenario(resolveVariant(def01, seed), seed), case01.page.at, { tool: 'changes' }));
+    }
   });
 
   it('is deterministic across repeated requests for every kind', async () => {
@@ -29,8 +40,8 @@ describe('worker boundary', () => {
       { kind: 'vocabulary', caseId: 'case-01' },
     ];
     for (const body of bodies) {
-      const a = JSON.stringify(await handleRequest(body, async () => case01));
-      const b = JSON.stringify(await handleRequest(body, async () => case01));
+      const a = JSON.stringify(await handleRequest(body, async () => def01));
+      const b = JSON.stringify(await handleRequest(body, async () => def01));
       expect(a).toBe(b);
     }
   });

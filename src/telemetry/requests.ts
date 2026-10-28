@@ -1,6 +1,6 @@
 import type { Component } from '../engine/case-schema';
 import { createRng } from '../engine/random';
-import { systemStateAt, type Scenario, type SystemState } from '../engine/state';
+import { nightKey, systemStateAt, type Scenario, type SystemState } from '../engine/state';
 import { minuteToMs } from '../engine/time';
 import type { Span } from './otel';
 
@@ -139,7 +139,7 @@ const AGGREGATE_CACHE_LIMIT = 6000;
 // Only mitigations already in force can change a minute, so earlier minutes are shared across what-ifs.
 function aggregateKey(s: Scenario, minute: number): string {
   const relevant = s.mitigations.filter((m) => m.effectiveAt <= minute + 1).map((m) => `${m.id}:${m.startedAt}`).join(',');
-  return `${s.data.id}@${s.data.version}#${s.seed}|${relevant}|${minute}`;
+  return `${nightKey(s)}|${relevant}|${minute}`;
 }
 
 export function aggregateMinute(s: Scenario, minute: number): MinuteAggregate {

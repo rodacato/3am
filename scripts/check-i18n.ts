@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { SOURCES } from '../src/content/sources';
+import { caseVariants } from '../src/engine/case-schema';
 import { CASES_DIR, ROOT, caseIds, loadCases, readJson } from './load-cases';
 
 // Fails on any key missing (or orphaned) in any locale, for the UI and for every case.
@@ -43,22 +44,27 @@ for (const file of walk(join(ROOT, 'src'))) {
 
 const cases = await loadCases();
 for (const id of caseIds()) {
-  const data = cases.find((c) => c.id === id);
+  const def = cases.find((c) => c.id === id);
   const text = compareLocales(join(CASES_DIR, id, 'locales'), id);
-  if (!data) continue;
-  const keys = [
-    'title', 'briefing.company', 'briefing.role', 'briefing.tonight', 'debrief.chainNote', data.alert.summaryKey,
-    ...data.changes.map((c) => c.messageKey),
-    ...data.tools.dashboards.flatMap((d) => [d.titleKey, ...d.panels.map((p) => p.titleKey)]),
-    ...data.tools.runbooks.flatMap((r) => [r.titleKey, r.bodyKey]),
-    ...data.mitigations.flatMap((m) => ['title', 'what', 'doing'].map((f) => `mitigation.${m.id}.${f}`)),
-    ...data.stakeholderPrompts.flatMap((p) => [p.fromKey, p.askKey]),
-    ...data.factors.map((f) => f.textKey),
-    ...data.distractorFactors.map((d) => d.textKey),
-    ...data.causalChain.nodes.map((n) => n.labelKey),
-  ];
+  if (!def) continue;
+  const keys = new Set([
+    'title', 'briefing.company', 'briefing.role', 'briefing.tonight', def.alert.summaryKey,
+    ...def.tools.dashboards.flatMap((d) => [d.titleKey, ...d.panels.map((p) => p.titleKey)]),
+    ...def.tools.runbooks.flatMap((r) => [r.titleKey, r.bodyKey]),
+    ...def.stakeholderPrompts.flatMap((p) => [p.fromKey, p.askKey]),
+  ]);
+  for (const data of caseVariants(def)) {
+    [
+      data.debriefNoteKey,
+      ...data.changes.map((c) => c.messageKey),
+      ...data.mitigations.flatMap((m) => ['title', 'what', 'doing'].map((f) => `mitigation.${m.id}.${f}`)),
+      ...data.factors.map((f) => f.textKey),
+      ...data.distractorFactors.map((d) => d.textKey),
+      ...data.causalChain.nodes.map((n) => n.labelKey),
+    ].forEach((k) => keys.add(k));
+  }
   for (const k of keys) if (!(k in text)) problems.push(`${id}: case data references missing "${k}"`);
-  for (const r of data.readNext) if (!SOURCES.some((s) => s.id === r)) problems.push(`${id}: readNext names unknown source ${r}`);
+  for (const r of def.readNext) if (!SOURCES.some((s) => s.id === r)) problems.push(`${id}: readNext names unknown source ${r}`);
 }
 
 if (problems.length) {

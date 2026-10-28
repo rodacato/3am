@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { validateCase } from '../src/engine/case-schema';
+import { resolveVariant, validateCase } from '../src/engine/case-schema';
 import { runTool } from '../src/engine/tools';
 import case01 from '../src/content/cases/case-01/case';
 import { freshStart, strings } from './support';
@@ -8,7 +8,7 @@ import { freshStart, strings } from './support';
 test('a log search counts the same lines in the worker as in Node', async ({ page }) => {
   const { ui } = strings('en');
   const filter = 'service:checkout-api level:warn+';
-  const data = validateCase(case01);
+  const data = resolveVariant(validateCase(case01), 1);
   const node = runTool({ data, seed: 1, mitigations: [] }, data.page.at, { tool: 'logs', filter });
   if (!node.ok || node.data.tool !== 'logs') throw new Error('node query failed');
 

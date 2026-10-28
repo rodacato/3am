@@ -31,8 +31,12 @@ export type ConfigValue = number | string | boolean;
 
 const RESTART_DISRUPTION_MIN = 1;
 
+export function nightKey(s: Scenario): string {
+  return `${s.data.id}@${s.data.version}/${s.data.variantId}#${s.seed}`;
+}
+
 export function scenarioKey(s: Scenario): string {
-  return `${s.data.id}@${s.data.version}#${s.seed}|${s.mitigations.map((m) => `${m.id}:${m.startedAt}`).join(',')}`;
+  return `${nightKey(s)}|${s.mitigations.map((m) => `${m.id}:${m.startedAt}`).join(',')}`;
 }
 
 function effectiveBy(s: Scenario, ids: readonly string[], minute: number): AppliedMitigation | undefined {

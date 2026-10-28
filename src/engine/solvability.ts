@@ -5,6 +5,7 @@ import { isAlertFiring, observeMitigation, runTool, type ToolRequest } from './t
 
 export type SolvabilityReport = {
   caseId: string;
+  variantId: string;
   seed: number;
   ok: boolean;
   problems: string[];
@@ -55,6 +56,12 @@ export function checkSolvable(data: CaseData, seed: number): SolvabilityReport {
     if (stableAt === null) problems.push(`mitigation ${mitigation.id} does not clear the alert`);
     else if (stableAt - data.page.at > data.budgetMin) problems.push(`stable at +${stableAt - data.page.at} min, over the ${data.budgetMin} min budget`);
   }
+  // Only the fix may close the night: any other action must leave the alert coming back.
+  for (const wrong of data.mitigations) {
+    if (wrong.id === data.solution.mitigation) continue;
+    const applied = { id: wrong.id, startedAt: clock, effectiveAt: clock + wrong.costMin };
+    if (observeMitigation({ ...base, mitigations: [applied] }, applied.effectiveAt) !== null) problems.push(`mitigation ${wrong.id} also clears the alert`);
+  }
 
-  return { caseId: data.id, seed, ok: problems.length === 0, problems, pagedWhileFiring, quietBeforeIncident, investigationEndsAt: clock, stableAt, evidence: [...evidence].sort() };
+  return { caseId: data.id, variantId: data.variantId, seed, ok: problems.length === 0, problems, pagedWhileFiring, quietBeforeIncident, investigationEndsAt: clock, stableAt, evidence: [...evidence].sort() };
 }

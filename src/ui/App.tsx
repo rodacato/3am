@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CASE_IDS, loadCase, loadCaseMessages } from '../content/registry';
 import { EMPTY_POSTMORTEM } from '../engine/board';
-import type { CaseData } from '../engine/case-schema';
+import { resolveVariant, type CaseDefinition } from '../engine/case-schema';
 import { reportMethod } from '../engine/scoring';
 import { createStandaloneBridge } from '../host/bridge';
 import { detectLocale, I18nProvider, translate, useI18n, type Messages } from '../i18n/i18n';
@@ -32,7 +32,7 @@ function newSeed(): number {
   return (buf[0] ?? 7) % 100_000 + 2;
 }
 
-type Loaded = { data: CaseData; messages: Messages };
+type Loaded = { data: CaseDefinition; messages: Messages };
 
 // ?tour=off for embeds and tests that must not see it, ?tour=on to show it again on demand.
 function tourMode(search: string): TourMode {
@@ -50,10 +50,10 @@ function NarrowNotice() {
 function CaseRoom({ loaded, stored, setStored, client, locale, vocabulary, onReset }: {
   loaded: Loaded; stored: Stored; setStored: (fn: (s: Stored) => Stored) => void; client: SimulationClient; locale: string; vocabulary: MetricVocabulary | null; onReset: () => void;
 }) {
-  const { data } = loaded;
   const reducedMotion = useReducedMotion();
   const bridge = useMemo(() => createStandaloneBridge(), []);
-  const initial = stored.sessions[data.id] ?? freshSession(FIRST_SEED);
+  const initial = stored.sessions[loaded.data.id] ?? freshSession(FIRST_SEED);
+  const data = resolveVariant(loaded.data, initial.seed);
   const persist = useCallback((s: CaseSession) => setStored((prev) => ({ ...prev, sessions: { ...prev.sessions, [data.id]: s } })), [data.id, setStored]);
   const session = useCaseSession(data, initial, client, persist);
 
