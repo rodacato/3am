@@ -329,6 +329,7 @@ button { cursor: pointer; }
 .notice--calm .notice__head { color: var(--fog-text); }
 .notice--ok { border-left-color: var(--amber); }
 .notice--ok .notice__head { color: var(--amber); }
+.notice__action { margin-top: 6px; align-self: stretch; }
 .users { display: flex; align-items: baseline; gap: 8px; font-size: 11px; color: var(--fog-text); letter-spacing: 0.06em; }
 .users strong { font-size: 20px; color: var(--red); font-weight: 600; letter-spacing: 0; }
 .users em { font-family: var(--serif); letter-spacing: 0; font-size: 13px; color: var(--paper-dim); }

@@ -54,6 +54,7 @@ for (const locale of LOCALES) {
     await page.getByRole('button', { name: ui('actions.go'), exact: true }).click();
     await expect(page.locator('.watch')).toBeVisible();
     await expect(page.getByRole('button', { name: ui('phone.close') })).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole('button', { name: ui('phone.close') })).toBeInViewport();
 
     // Postmortem with the three real factors, then the debrief.
     await page.getByRole('button', { name: ui('phone.close') }).click();

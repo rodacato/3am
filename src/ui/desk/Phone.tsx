@@ -55,6 +55,7 @@ export function Phone({ session, displayClock, onFocus, focused }: Props) {
                 <div className="notice notice--ok">
                   <span className="notice__head">{t('phone.resolved', { clock: clockLabel(context.stableAt) })}</span>
                   <span>{t('phone.resolvedBody')}</span>
+                  <button className="big-button notice__action" onClick={() => session.send({ type: 'WRITE_POSTMORTEM' })}>{t('phone.close')}</button>
                 </div>
               )}
               {pulse && (
@@ -92,9 +93,6 @@ export function Phone({ session, displayClock, onFocus, focused }: Props) {
               )}
               {!prompt && lastUpdate && (
                 <div className="hint">{t('phone.sent', { clock: clockLabel(lastUpdate.sentAt) })}</div>
-              )}
-              {phase === 'stable' && (
-                <button className="big-button" onClick={() => session.send({ type: 'WRITE_POSTMORTEM' })}>{t('phone.close')}</button>
               )}
             </>
           )}
