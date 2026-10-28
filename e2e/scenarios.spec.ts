@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { closeCase, collectErrors, freshStart, mitigate, monitorClock, startShift, strings } from './support';
+import { closeCase, collectErrors, freshStart, mitigate, monitorClock, seedFor, startShift, strings } from './support';
 
 // Nightly: the paths a reader takes besides the happy one. Each says what would be broken if it failed.
 
@@ -126,7 +126,7 @@ test('a runbook page can be torn off and the language can change mid-case withou
   await expect(page.locator('.slip')).toHaveCount(1);
 });
 
-for (const seed of [2, 42]) {
+for (const seed of [seedFor('a', 1), seedFor('a', 2)]) {
   test(`the rollback closes the case on another night (seed ${seed})`, async ({ page }) => {
     const errors = collectErrors(page);
     await freshStart(page, 'en', { seed });
