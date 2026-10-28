@@ -1,11 +1,11 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createActor } from 'xstate';
-import { caseVariants, resolveVariant, validateCase, type CaseData, type CaseDefinition, type CaseInput } from '../src/engine/case-schema';
+import { caseVariants, resolveVariant, validateCase, type CaseData, type CaseDefinition, type CaseInput, type Effect } from '../src/engine/case-schema';
 import { incidentMachine, type IncidentInput } from '../src/engine/incident-machine';
 import { checkSolvable } from '../src/engine/solvability';
 import { effectWindow, timedChanges } from '../src/engine/jitter';
 import { aggregateMinute } from '../src/telemetry/requests';
-import { isAlertFiring, observeMitigation, runTool } from '../src/engine/tools';
+import { isAlertFiring, observeMitigation, runTool, STABLE_FOR_MIN } from '../src/engine/tools';
 import case01Input from '../src/content/cases/case-01/case';
 import { everyNight, loadAllCases, scenario } from './helpers';
 
@@ -116,6 +116,25 @@ describe('seeded red herrings', () => {
     expect(logsInMinute(s, until!).some((r) => r.templateId.startsWith('db.'))).toBe(false);
   });
 
+  it('a rate log that follows an effect stops when a mitigation removes the effect', async () => {
+    const { logsInMinute } = await import('../src/telemetry/logs');
+    const data: CaseData = {
+      ...case01,
+      variantId: 'follows-removed',
+      effects: [...case01.effects, { id: 'hot', component: 'checkout-api', param: 'cpu', op: 'add', value: 0.3, from: 150, rampMin: 0, growthPerMin: 0, jitterMin: 0, resetBy: [], removedBy: ['scale-checkout'] }],
+      logs: [...case01.logs, { id: 'checkout.hot', component: 'checkout-api', severity: 'WARN', body: 'hot', attributes: {}, trigger: { kind: 'rate', perMin: 5, followsEffect: 'hot' } }],
+    };
+    const count = (s: ReturnType<typeof scenario>, from: number, to: number) => {
+      let n = 0;
+      for (let m = from; m < to; m++) n += logsInMinute(s, m).filter((r) => r.templateId === 'checkout.hot').length;
+      return n;
+    };
+    const scaled = scenario(data, 1, [{ id: 'scale-checkout', startedAt: 200, effectiveAt: 208 }]);
+    expect(count(scaled, 140, 150), 'nothing before the effect starts').toBe(0);
+    expect(count(scaled, 150, 208)).toBeGreaterThan(200);
+    expect(count(scaled, 208, 240), 'nothing once it is removed').toBe(0);
+  });
+
   it('refuses a case that jitters a change its factors depend on', () => {
     const broken = singleNight(case01);
     broken.changes = broken.changes?.map((c) => (c.id === 'cfg-413' ? { ...c, jitterMin: 5 } : c));
@@ -134,6 +153,22 @@ describe('mitigations', () => {
   it('restarting or scaling checkout does not, because the config survives both', () => {
     expect(observeMitigation(scenario(case01, 1, applied('restart-checkout', 4)), start + 4)).toBeNull();
     expect(observeMitigation(scenario(case01, 1, applied('scale-checkout', 8)), start + 8)).toBeNull();
+  });
+
+  it('a fix that only resets a growing slowdown is not stable, one that removes it is', () => {
+    const growing = (fix: Partial<Effect>): CaseData => ({
+      ...case01,
+      variantId: `leak-${Object.keys(fix).join('-')}`,
+      changes: case01.changes.filter((c) => c.kind !== 'config'),
+      effects: [{ id: 'leak', component: 'checkout-api', param: 'latency.medianMs', op: 'add', value: 0, from: 160, rampMin: 0, growthPerMin: 120, jitterMin: 0, resetBy: [], removedBy: [], ...fix }],
+    });
+    const restart = applied('restart-checkout', 4);
+    const reset = scenario(growing({ resetBy: ['restart-checkout'] }), 1, restart);
+    expect(isAlertFiring(reset, start)).toBe(true);
+    const quietStretch = Array.from({ length: STABLE_FOR_MIN }, (_, k) => start + 10 + k).every((m) => !isAlertFiring(reset, m));
+    expect(quietStretch, 'the reset does quiet the alert for a while').toBe(true);
+    expect(observeMitigation(reset, start + 4)).toBeNull();
+    expect(observeMitigation(scenario(growing({ removedBy: ['restart-checkout'] }), 1, restart), start + 4)).not.toBeNull();
   });
 
   it('a restart drops requests for a minute', () => {

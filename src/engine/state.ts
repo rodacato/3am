@@ -85,6 +85,14 @@ function effectStrength(effect: Effect, s: Scenario, minute: number): { ramp: nu
   return { ramp, value: effect.value + effect.growthPerMin * (minute - reset) };
 }
 
+export function isEffectActive(s: Scenario, effectId: string, minute: number): boolean {
+  const effect = s.data.effects.find((e) => e.id === effectId);
+  const strength = effect ? effectStrength(effect, s, minute) : null;
+  if (!effect || !strength) return false;
+  const magnitude = effect.op === 'mul' ? strength.value - 1 : strength.value;
+  return strength.ramp * magnitude !== 0;
+}
+
 function applyEffect(base: number, effect: Effect, strength: { ramp: number; value: number }): number {
   const { ramp, value } = strength;
   if (effect.op === 'set') return base + (value - base) * ramp;
