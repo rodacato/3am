@@ -40,4 +40,8 @@ rate-based logs kept firing after the mitigation that removed their effect.
 
 `check:solvable` and the unit tests iterate every variant, not just a set of seeds. The e2e tests pin
 a seed per variant. Variant text lives in the case's own locale files under a `variant.<id>.` prefix,
-and `check:i18n` walks every variant's keys.
+except mitigation text, which stays under `mitigation.<id>.` with an id unique across variants, and
+`check:i18n` walks every variant's keys.
+
+Variant D of case 01 (a memory leak) pairs memory with a latency effect that starts later, so after
+a restart latency returns sooner than memory would explain. Load-dependent latency fixes that.
