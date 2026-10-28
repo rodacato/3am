@@ -22,6 +22,14 @@ export function strings(locale: Locale) {
   return { ui: (k: string) => get(ui, k), kase: (k: string) => get(kase, k) };
 }
 
+// Case 01's variants in order: the seed picks one, (seed - 1) mod 4, so each repeats every fourth seed.
+export const CASE01_VARIANTS = ['a', 'b', 'c', 'd'] as const;
+export type Case01Variant = (typeof CASE01_VARIANTS)[number];
+
+export function seedFor(variant: Case01Variant, night = 0): number {
+  return CASE01_VARIANTS.indexOf(variant) + 1 + night * CASE01_VARIANTS.length;
+}
+
 type StartOptions = { tour?: 'auto' | 'on' | 'off'; seed?: number };
 
 // Seed storage before any app code runs, once per test, so the app's own first save cannot race it.
