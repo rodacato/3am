@@ -178,19 +178,33 @@ export function runTool(s: Scenario, now: number, request: ToolRequest): ToolRes
 export const STABLE_FOR_MIN = 5;
 export const WATCH_LIMIT_MIN = 20;
 
-// After a mitigation lands, the reader watches the charts: the first minute that starts a quiet stretch.
+// After a mitigation lands, the reader watches the charts: the minute a quiet stretch is confirmed,
+// or null if nothing quiets down, or the condition comes back before the watch is over.
 export function observeMitigation(s: Scenario, effectiveAt: number): number | null {
-  for (let m = effectiveAt; m <= effectiveAt + WATCH_LIMIT_MIN; m++) {
+  const watchEnd = effectiveAt + WATCH_LIMIT_MIN;
+  for (let m = effectiveAt; m <= watchEnd; m++) {
     let quiet = true;
     for (let k = m; k < m + STABLE_FOR_MIN && quiet; k++) quiet = !isAlertFiring(s, k);
-    if (quiet) return m + STABLE_FOR_MIN - 1;
+    if (!quiet) continue;
+    const clearsAt = m + STABLE_FOR_MIN - 1;
+    for (let k = clearsAt + 1; k <= watchEnd; k++) if (isAlertConditionTrue(s, k)) return null;
+    return clearsAt;
   }
   return null;
+}
+
+function alertSeries(s: Scenario, fromMin: number, toMin: number) {
+  return evaluateRange(metricSource(s, toMin), s.data.alert.expr, { fromMin, toMin, stepMin: 1 });
+}
+
+// The alert's expression at one minute, without waiting for it to hold.
+export function isAlertConditionTrue(s: Scenario, minute: number): boolean {
+  return alertSeries(s, minute, minute).series.some((x) => x.values[0] !== null);
 }
 
 export function isAlertFiring(s: Scenario, minute: number): boolean {
   const from = minute - s.data.alert.forMin + 1;
   if (from < s.data.historyFrom) return false;
-  const result = evaluateRange(metricSource(s, minute), s.data.alert.expr, { fromMin: from, toMin: minute, stepMin: 1 });
+  const result = alertSeries(s, from, minute);
   return result.series.length > 0 && result.times.every((_, i) => result.series.some((x) => x.values[i] !== null));
 }

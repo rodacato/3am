@@ -1,6 +1,6 @@
 import type { LogTemplate } from '../engine/case-schema';
 import { createRng, type Rng } from '../engine/random';
-import { nightKey, type Scenario } from '../engine/state';
+import { isEffectActive, nightKey, type Scenario } from '../engine/state';
 import { effectShift } from '../engine/jitter';
 import { minuteToMs } from '../engine/time';
 import { SEVERITY_NUMBER, type LogRecord } from './otel';
@@ -93,6 +93,7 @@ export function logsInMinute(s: Scenario, minute: number): LogRecord[] {
     if (trig.kind !== 'rate') continue;
     const shift = effectShift(s, trig.followsEffect);
     if ((trig.from !== undefined && minute < trig.from + shift) || (trig.until !== undefined && minute >= trig.until + shift)) continue;
+    if (trig.followsEffect && !isEffectActive(s, trig.followsEffect, minute)) continue;
     const count = Math.floor(trig.perMin) + (rng.chance(trig.perMin % 1) ? 1 : 0);
     for (let i = 0; i < count; i++) {
       out.push(makeRecord(t, minuteStart + rng.next() * 60_000, renderBody(t.body, {}, rng), seq++, minute, null, null, {}));
