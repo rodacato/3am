@@ -9,6 +9,7 @@ import { CaseFolder } from '../overlays/CaseFolder';
 import { PostmortemSheet } from '../overlays/PostmortemSheet';
 import { Tour, type TourMode } from '../overlays/Tour';
 import type { CaseProgress } from '../persistence';
+import type { ShelfEntry } from '../progression';
 import type { Session } from '../session/useCaseSession';
 import { playPage } from '../sound';
 import { dawnProgress, skyGradient } from '../window/sky';
@@ -25,6 +26,9 @@ export type Focus = 'window' | 'monitor' | 'phone';
 type Props = {
   session: Session;
   caseNumber: number;
+  shelf: ShelfEntry[];
+  onOpenCase: (id: string) => void;
+  nextCase: { number: number; open: () => void } | null;
   vocabulary: MetricVocabulary | null;
   progress: CaseProgress | undefined;
   locale: string;
@@ -147,6 +151,8 @@ export function Desk(props: Props) {
       {phase === 'briefing' && !touring && (
         <CaseFolder
           caseNumber={props.caseNumber}
+          shelf={props.shelf}
+          onOpenCase={props.onOpenCase}
           progress={props.progress}
           locale={props.locale}
           sound={sound}
@@ -160,7 +166,7 @@ export function Desk(props: Props) {
       {phase === 'postmortem' && <PostmortemSheet session={session} onSubmit={() => session.send({ type: 'SUBMIT_POSTMORTEM' })} />}
       {phase === 'debrief' && (
         <Suspense fallback={<div className="overlay"><div className="loading">{t('debrief.drawing')}</div></div>}>
-          <Debrief session={session} reducedMotion={reducedMotion} onReplay={props.onReplay} onReset={() => setConfirmReset(true)} />
+          <Debrief session={session} reducedMotion={reducedMotion} next={props.nextCase} onReplay={props.onReplay} onReset={() => setConfirmReset(true)} />
         </Suspense>
       )}
       {touring && <Tour onZone={setTourZone} onClose={closeTour} />}
