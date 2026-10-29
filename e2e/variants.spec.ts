@@ -1,27 +1,15 @@
-import { expect, test, type Page } from '@playwright/test';
-import { closeCase, collectErrors, freshStart, mitigate, seedFor, startShift, strings, type Case01Variant } from './support';
+import { expect, test } from '@playwright/test';
+import { closeCase, collectErrors, expectDebriefOf, expectResolved, freshStart, mitigate, seedFor, startShift, strings, type Variant } from './support';
 
 // Each night of case 01 has its own cause and its own fix; the right action must close it and the debrief must tell that night's story.
 
 const en = strings('en');
 
-const nights: { variant: Case01Variant; fix: string }[] = [
+const nights: { variant: Variant; fix: string }[] = [
   { variant: 'b', fix: 'mitigation.rollback-checkout-2140.title' },
   { variant: 'c', fix: 'mitigation.scale-checkout.title' },
   { variant: 'd', fix: 'mitigation.rollback-checkout-2130.title' },
 ];
-
-async function expectResolved(page: Page) {
-  const close = page.getByRole('button', { name: en.ui('phone.close') });
-  await expect(close).toBeVisible({ timeout: 30_000 });
-  await expect(close).toBeInViewport();
-  await expect(page.getByText(en.ui('phone.resolved').split('{')[0] as string)).toBeVisible();
-}
-
-async function expectDebriefOf(page: Page, variant: Case01Variant) {
-  await expect(page.getByRole('img', { name: en.ui('debrief.chainLabel') })).toContainText(en.kase(`variant.${variant}.chain.change`));
-  await expect(page.locator('.debrief')).toContainText(en.kase(`variant.${variant}.debriefNote`));
-}
 
 for (const { variant, fix } of nights) {
   test(`variant ${variant} closes with its own fix and debriefs its own chain`, async ({ page }) => {
@@ -29,9 +17,9 @@ for (const { variant, fix } of nights) {
     await freshStart(page, 'en', { seed: seedFor(variant) });
     await startShift(page, en);
     await mitigate(page, en, en.kase(fix));
-    await expectResolved(page);
+    await expectResolved(page, en);
     await closeCase(page, en);
-    await expectDebriefOf(page, variant);
+    await expectDebriefOf(page, en, variant);
     expect(errors).toEqual([]);
   });
 }
@@ -46,8 +34,8 @@ test('variant d: a restart does not resolve the case, the rollback does', async 
   await expect(page.getByRole('button', { name: en.ui('phone.close') })).toHaveCount(0);
 
   await mitigate(page, en, en.kase('mitigation.rollback-checkout-2130.title'));
-  await expectResolved(page);
+  await expectResolved(page, en);
   await closeCase(page, en);
-  await expectDebriefOf(page, 'd');
+  await expectDebriefOf(page, en, 'd');
   expect(errors).toEqual([]);
 });
