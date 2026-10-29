@@ -122,7 +122,7 @@ export function Desk(props: Props) {
         </div>
       </div>
       <div className="sill">
-        <span className="sill__caption">{t('sill.caption', { title: t('case.title'), clock: clockLabel(displayClock) })}</span>
+        <span className="sill__caption">{t('sill.caption', { title: t('case.title'), company: t('case.company'), clock: clockLabel(displayClock) })}</span>
         <span className="sill__controls">
           {LOCALES.map((l) => (
             <button key={l.code} aria-pressed={props.locale === l.code} onClick={() => props.onLocale(l.code)} aria-label={l.name}>{l.short}</button>

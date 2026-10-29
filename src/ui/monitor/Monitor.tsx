@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { CaseData } from '../../engine/case-schema';
 import type { ToolRequest } from '../../engine/tools';
 import { clockLabel } from '../../engine/time';
 import { useI18n } from '../../i18n/i18n';
+import { metricUnit } from '../../query/promql/unit';
 import type { MetricVocabulary } from '../../telemetry/source';
 import type { Session } from '../session/useCaseSession';
 import type { PinInput } from './pins';
@@ -28,6 +30,13 @@ type Props = {
 
 function stripThreshold(expr: string): string {
   return expr.replace(/\s*(>|<|>=|<=|==|!=)\s*[\d.]+\s*$/, '');
+}
+
+// The editors open on the service that paged: its alert query, its warnings, and its slow or failed traces.
+function firstDrafts(data: CaseData): Record<string, string> {
+  const service = /service="([^"]+)"/.exec(data.alert.expr)?.[1] ?? data.traffic.entry;
+  const traces = metricUnit(data.alert.expr) === 'seconds' ? `min:${data.impact.slowMs / 1000}s` : 'status:error';
+  return { metrics: stripThreshold(data.alert.expr), logs: `service:${service} level:warn+`, traces: `service:${service} ${traces}` };
 }
 
 function ActionsTool({ session }: { session: Session }) {
@@ -119,8 +128,8 @@ function WatchPanel({ session, reducedMotion, onWatchClock }: { session: Session
       {view ? (
         <TimeChart
           times={view.times}
-          series={[{ label: 'p99', values: view.values }]}
-          unit="seconds"
+          series={[{ label: t(`case.${session.data.alert.summaryKey}`), values: view.values }]}
+          unit={metricUnit(session.data.alert.expr)}
           height={170}
           revealUpTo={reveal ?? pending.startedAt}
           markers={[{ minute: pending.effectiveAt, color: '#F2A541' }]}
@@ -137,11 +146,7 @@ export function Monitor({ session, vocabulary, pin, onFocus, reopen, reducedMoti
   const [last, setLast] = useState<Partial<Record<Tab, RunResult>>>({});
   const [tracesList, setTracesList] = useState<RunResult | null>(null);
   const [busy, setBusy] = useState(false);
-  const [drafts, setDrafts] = useState<Record<string, string>>({
-    metrics: 'histogram_quantile(0.99, sum by (le) (rate(http_server_request_duration_seconds_bucket{service="checkout-api"}[5m])))',
-    logs: 'service:checkout-api level:warn+',
-    traces: 'service:checkout-api min:4s',
-  });
+  const [drafts, setDrafts] = useState<Record<string, string>>(() => firstDrafts(session.data));
   const [flash, setFlash] = useState<number | null>(null);
   const live = session.phase === 'investigating' || session.phase === 'stable';
 

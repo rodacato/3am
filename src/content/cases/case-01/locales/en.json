@@ -1,5 +1,6 @@
 {
   "title": "The Quiet Push",
+  "company": "Mercadito",
   "briefing.company": "Mercadito is a marketplace: thousands of small shops, one checkout. Orders go from the storefront to checkout-api, which calls the cart, the payments database and an external payment gateway that someone else runs.",
   "briefing.role": "You're on call for checkout this week. It's Thursday. Nobody else is awake, which is the whole point of you.",
   "briefing.tonight": "03:14. Checkout is slow. Again.",

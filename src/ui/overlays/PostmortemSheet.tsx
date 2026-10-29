@@ -27,7 +27,7 @@ export function PostmortemSheet({ session, onSubmit }: { session: Session; onSub
 
   const draftTimeline = () => {
     const lines = [
-      `${clockLabel(data.page.at)} ${t('pm.tl.paged')}`,
+      `${clockLabel(data.page.at)} ${t('pm.tl.paged', { alert: t(`case.${data.alert.summaryKey}`) })}`,
       `${clockLabel(context.ackAt ?? data.page.at)} ${t('pm.tl.ack')}`,
       ...context.mitigations.map((m) => `${clockLabel(m.startedAt)} ${t(`case.mitigation.${m.id}.title`)}`),
       ...(context.stableAt !== null ? [`${clockLabel(context.stableAt)} ${t('pm.tl.stable')}`] : []),
