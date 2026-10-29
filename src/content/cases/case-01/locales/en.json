@@ -104,9 +104,9 @@
   "variant.d.factor.gcPauses": "With the heap that full, garbage collection pauses stall orders, and they get longer every minute.",
   "variant.d.factor.noSoak": "Releases only get a five-minute smoke test and nothing alerts on checkout-api memory, so a slow leak ships unseen.",
   "variant.d.chain.noSoak": "Releases get a five-minute smoke test; nothing watches memory",
-  "variant.d.chain.change": "22:40 · checkout-api 2.13.0 starts leaking memory",
+  "variant.d.chain.change": "23:20 · checkout-api 2.13.0 starts leaking memory",
   "variant.d.chain.heap": "The heap grows about 9 MB a minute, all night",
   "variant.d.chain.gc": "GC pauses stall orders, longer every minute",
   "variant.d.chain.customers": "Customers wait longer and longer to pay",
-  "variant.d.debriefNote": "The leak started with the 22:40 release and grew for hours before anyone could feel it. A restart frees the heap, which is why it looks like a fix: the alert goes quiet, then the pauses come back. Only the rollback removes the code that leaks; a five-minute smoke test was never going to see it."
+  "variant.d.debriefNote": "The leak started with the 23:20 release and grew for hours before anyone could feel it. A restart frees the heap, which is why it looks like a fix: the alert goes quiet, then the pauses come back. Only the rollback removes the code that leaks; a five-minute smoke test was never going to see it."
 }

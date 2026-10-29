@@ -104,9 +104,9 @@
   "variant.d.factor.gcPauses": "Con el heap así de lleno, las pausas del garbage collector detienen los pedidos, y cada minuto duran más.",
   "variant.d.factor.noSoak": "Las versiones solo pasan por un smoke test de cinco minutos y nada alerta sobre la memoria de checkout-api, así que una fuga lenta sale sin que nadie la vea.",
   "variant.d.chain.noSoak": "Las versiones pasan un smoke test de cinco minutos; nadie vigila la memoria",
-  "variant.d.chain.change": "22:40 · checkout-api 2.13.0 empieza a fugar memoria",
+  "variant.d.chain.change": "23:20 · checkout-api 2.13.0 empieza a fugar memoria",
   "variant.d.chain.heap": "El heap crece unos 9 MB por minuto, toda la noche",
   "variant.d.chain.gc": "Las pausas del GC detienen los pedidos, cada minuto más largas",
   "variant.d.chain.customers": "Los clientes esperan cada vez más para pagar",
-  "variant.d.debriefNote": "La fuga empezó con la versión de las 22:40 y creció durante horas antes de que alguien la sintiera. Reiniciar libera el heap, y por eso parece arreglo: la alerta se calma y luego regresan las pausas. Solo regresar la versión quita el código que fuga; un smoke test de cinco minutos nunca la iba a ver."
+  "variant.d.debriefNote": "La fuga empezó con la versión de las 23:20 y creció durante horas antes de que alguien la sintiera. Reiniciar libera el heap, y por eso parece arreglo: la alerta se calma y luego regresan las pausas. Solo regresar la versión quita el código que fuga; un smoke test de cinco minutos nunca la iba a ver."
 }
