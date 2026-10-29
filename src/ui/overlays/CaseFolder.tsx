@@ -22,7 +22,7 @@ export function CaseFolder({ caseNumber, shelf, onOpenCase, progress, locale, so
     <div className="overlay" style={{ background: 'transparent', alignItems: 'end', paddingBottom: '4vh' }}>
       <article className="sheet folder" aria-labelledby="case-title" style={{ width: 'min(860px, 100%)' }}>
         <span className="folder__tab">{t('folder.tab', { number: String(caseNumber).padStart(2, '0') })}</span>
-        <div className="kicker">{t('folder.kicker')}</div>
+        <div className="kicker">{t('folder.kicker', { company: t('case.company').toLocaleUpperCase(locale) })}</div>
         <h1 id="case-title">{t('case.title')}</h1>
         <div className="folder-row">
           <div>

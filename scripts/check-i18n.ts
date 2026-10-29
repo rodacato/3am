@@ -48,7 +48,7 @@ for (const id of caseIds()) {
   const text = compareLocales(join(CASES_DIR, id, 'locales'), id);
   if (!def) continue;
   const keys = new Set([
-    'title', 'briefing.company', 'briefing.role', 'briefing.tonight', def.alert.summaryKey,
+    'title', 'company', 'briefing.company', 'briefing.role', 'briefing.tonight', def.alert.summaryKey,
     ...def.tools.dashboards.flatMap((d) => [d.titleKey, ...d.panels.map((p) => p.titleKey)]),
     ...def.tools.runbooks.flatMap((r) => [r.titleKey, r.bodyKey]),
     ...def.stakeholderPrompts.flatMap((p) => [p.fromKey, p.askKey]),

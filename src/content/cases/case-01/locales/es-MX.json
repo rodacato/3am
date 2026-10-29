@@ -1,5 +1,6 @@
 {
   "title": "El cambio silencioso",
+  "company": "Mercadito",
   "briefing.company": "Mercadito es un marketplace: miles de tiendas pequeñas, un solo checkout. Los pedidos van del storefront a checkout-api, que llama al carrito, a la base de datos de pagos y a una pasarela de pago externa que opera alguien más.",
   "briefing.role": "Esta semana te toca la guardia de checkout. Es jueves. Nadie más está despierto, y para eso estás tú.",
   "briefing.tonight": "03:14. Checkout está lento. Otra vez.",
