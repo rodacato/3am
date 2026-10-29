@@ -27,7 +27,7 @@ Each phase ends with screenshots in both locales, the e2e flow for its case, and
 
 1. **Hardening.** The debrief notes unanswered stakeholders; the seed jitters red herrings; the dashboard tool stops being equal tiles; hypothesis cards stay clear of building labels; first CI run and Pages deploy.
 2. **Host.** Manifest, embedded adapter, a conformance run with Dojo's `scroll-conformance` package, and the `evaluate` proposal opened in Dojo.
-3. **Case 02, "What changed?"** The 02:40 deploy explains everything; the change log becomes the first move.
+3. **Case 02, "What changed?"** The change log is the first move, but the guilty change is never in the service that pages and never simply the latest one: another team's release, flag, rollback, or an evening database setting that only bites when the nightly export runs. Case 01's variant B already covers the night when the latest deploy explains everything.
 4. **Case 03, red herrings.** Connection pool exhaustion hidden behind a loud cache.
 5. **Case 04, slow burn.** A memory leak over days and a query that slowed as data grew; a restart clears the symptom and the heap evidence.
 6. **Case 05, cascade.** A slow dependency and retries take down three services.
