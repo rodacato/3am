@@ -35,6 +35,11 @@ function newSeed(): number {
 
 type Loaded = { data: CaseDefinition; messages: Messages };
 
+// The case on the desk is written down when the page loads, so closing it never slides the reader into the next one mid-debrief.
+function pinCase(s: Stored): Stored {
+  return { ...s, preferences: { ...s.preferences, caseId: currentCase(CASE_IDS, s.progress, s.preferences.caseId) } };
+}
+
 // ?tour=off for embeds and tests that must not see it, ?tour=on to show it again on demand.
 function tourMode(search: string): TourMode {
   const value = new URLSearchParams(search).get('tour');
@@ -79,7 +84,7 @@ function CaseRoom({ loaded, stored, setStored, client, locale, vocabulary, onRes
       tourSeen={stored.preferences.tourSeen === true}
       onTourSeen={() => setStored((s) => ({ ...s, preferences: { ...s.preferences, tourSeen: true } }))}
       onReplay={() => setStored((s) => ({ ...s, sessions: { ...s.sessions, [data.id]: freshSession(newSeed()) } }))}
-      onReset={() => { clearAll(); setStored(() => structuredClone(EMPTY)); onReset(); }}
+      onReset={() => { clearAll(); setStored(() => pinCase(structuredClone(EMPTY))); onReset(); }}
       onStarted={() => bridge.unitStarted(data.id)}
       onCompleted={() => {
         const report = reportMethod(data, session.seed, session.context, session.board, session.postmortem);
@@ -95,7 +100,7 @@ function CaseRoom({ loaded, stored, setStored, client, locale, vocabulary, onRes
 }
 
 export function App() {
-  const [stored, setStoredState] = useState<Stored>(load);
+  const [stored, setStoredState] = useState<Stored>(() => pinCase(load()));
   const client = sharedClient();
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [vocabulary, setVocabulary] = useState<MetricVocabulary | null>(null);
