@@ -1,8 +1,11 @@
 import { LOCALES, useI18n } from '../../i18n/i18n';
 import type { CaseProgress } from '../persistence';
+import type { ShelfEntry } from '../progression';
 
 type Props = {
   caseNumber: number;
+  shelf: ShelfEntry[];
+  onOpenCase: (id: string) => void;
   progress: CaseProgress | undefined;
   locale: string;
   sound: boolean;
@@ -13,7 +16,7 @@ type Props = {
   onTour: () => void;
 };
 
-export function CaseFolder({ caseNumber, progress, locale, sound, onLocale, onSound, onStart, onReplay, onTour }: Props) {
+export function CaseFolder({ caseNumber, shelf, onOpenCase, progress, locale, sound, onLocale, onSound, onStart, onReplay, onTour }: Props) {
   const { t } = useI18n();
   return (
     <div className="overlay" style={{ background: 'transparent', alignItems: 'end', paddingBottom: '4vh' }}>
@@ -34,6 +37,24 @@ export function CaseFolder({ caseNumber, progress, locale, sound, onLocale, onSo
           </div>
         </div>
         {progress?.completed && <p className="muted">{t('folder.closedBefore', { count: progress.runs, runs: progress.runs })}</p>}
+        <div className="row" role="group" aria-label={t('folder.cases')} style={{ marginTop: 14 }}>
+          {shelf.map((c) => {
+            const number = String(c.number).padStart(2, '0');
+            return (
+              <button
+                key={c.id}
+                className="big-button big-button--ghost"
+                aria-pressed={c.number === caseNumber}
+                disabled={c.state === 'locked'}
+                title={c.state === 'locked' ? t('folder.lockedHint', { previous: String(c.number - 1).padStart(2, '0') }) : undefined}
+                style={{ fontWeight: c.number === caseNumber ? 700 : 400 }}
+                onClick={() => onOpenCase(c.id)}
+              >
+                {t(`folder.case.${c.state}`, { number })}
+              </button>
+            );
+          })}
+        </div>
         <div className="row" style={{ marginTop: 18, justifyContent: 'space-between' }}>
           <div className="row" role="group" aria-label={t('prefs.language')}>
             {LOCALES.map((l) => (

@@ -10,6 +10,7 @@ import { SimulationClient } from '../worker/client';
 import { Desk } from './desk/Desk';
 import type { TourMode } from './overlays/Tour';
 import { clearAll, EMPTY, load, save, type CaseSession, type Stored } from './persistence';
+import { caseShelf, currentCase, isUnlocked, nextCase } from './progression';
 import { useCaseSession } from './session/useCaseSession';
 import { useReducedMotion } from './useReducedMotion';
 
@@ -56,11 +57,17 @@ function CaseRoom({ loaded, stored, setStored, client, locale, vocabulary, onRes
   const data = resolveVariant(loaded.data, initial.seed);
   const persist = useCallback((s: CaseSession) => setStored((prev) => ({ ...prev, sessions: { ...prev.sessions, [data.id]: s } })), [data.id, setStored]);
   const session = useCaseSession(data, initial, client, persist);
+  const openCase = (id: string) => setStored((s) => (isUnlocked(CASE_IDS, s.progress, id) ? { ...s, preferences: { ...s.preferences, caseId: id } } : s));
+  const shelf = caseShelf(CASE_IDS, stored.progress);
+  const next = shelf.find((e) => e.id === nextCase(CASE_IDS, data.id));
 
   return (
     <Desk
       session={session}
       caseNumber={data.order}
+      shelf={shelf}
+      onOpenCase={openCase}
+      nextCase={next ? { number: next.number, open: () => openCase(next.id) } : null}
       vocabulary={vocabulary}
       progress={stored.progress[data.id]}
       locale={locale}
@@ -94,7 +101,7 @@ export function App() {
   const [vocabulary, setVocabulary] = useState<MetricVocabulary | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
   const [epoch, setEpoch] = useState(0);
-  const caseId = CASE_IDS[0] ?? 'case-01';
+  const caseId = currentCase(CASE_IDS, stored.progress, stored.preferences.caseId);
   const locale = stored.preferences.locale ?? detectLocale(navigator.languages);
 
   const setStored = useCallback((fn: (s: Stored) => Stored) => {

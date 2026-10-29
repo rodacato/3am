@@ -6,9 +6,9 @@ import { useI18n } from '../../i18n/i18n';
 import type { Session } from '../session/useCaseSession';
 import { CausalChain } from './CausalChain';
 
-type Props = { session: Session; reducedMotion: boolean; onReplay: () => void; onReset: () => void };
+type Props = { session: Session; reducedMotion: boolean; next: { number: number; open: () => void } | null; onReplay: () => void; onReset: () => void };
 
-export function Debrief({ session, reducedMotion, onReplay, onReset }: Props) {
+export function Debrief({ session, reducedMotion, next, onReplay, onReset }: Props) {
   const { t, format } = useI18n();
   const { data, seed, context, board, postmortem } = session;
   const report = useMemo(() => reportMethod(data, seed, context, board, postmortem), [data, seed, context, board, postmortem]);
@@ -102,7 +102,12 @@ export function Debrief({ session, reducedMotion, onReplay, onReset }: Props) {
             <button className="big-button big-button--ghost" onClick={() => void takeHome()} disabled={exporting} title={t('debrief.takeHomeHint')}>
               {exporting ? t('debrief.packing') : t('debrief.takeHome')}
             </button>
-            <button className="big-button" onClick={onReplay}>{t('debrief.replay')}</button>
+            {next ? (
+              <>
+                <button className="big-button big-button--ghost" onClick={onReplay}>{t('debrief.replay')}</button>
+                <button className="big-button" onClick={next.open}>{t('debrief.next', { number: String(next.number).padStart(2, '0') })}</button>
+              </>
+            ) : <button className="big-button" onClick={onReplay}>{t('debrief.replay')}</button>}
           </span>
         </div>
       </article>
