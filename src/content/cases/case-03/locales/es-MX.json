@@ -1,6 +1,7 @@
 {
   "title": "El caché escandaloso",
   "company": "Hamaca",
+  "phoneDate": "VIE 27 MAR",
   "briefing.company": "Hamaca vende cuartos en hotelitos y haciendas de todo Yucatán, desde una oficina en Mérida. Casi todos los huéspedes reservan desde Europa, donde ya es de mañana, y los sitios de metabúsqueda piden precios toda la noche. Las solicitudes entran por edge a bookings-api, que lee la disponibilidad de rooms-cache, consulta bookings-db con un pool de conexiones y le pide a channel-mgr, un channel manager externo, las tarifas en vivo.",
   "briefing.role": "Esta semana te toca la guardia de reservas. Es viernes, unas horas antes de que aterricen los primeros vuelos en Cancún. La oficina está apagada; Europa anda bien despierta.",
   "briefing.tonight": "02:58. La disponibilidad está lenta, y el caché está gritando.",

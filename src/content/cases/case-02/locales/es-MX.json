@@ -1,6 +1,7 @@
 {
   "title": "¿Qué cambió?",
   "company": "Antojo",
+  "phoneDate": "SÁB 21 MAR",
   "briefing.company": "Antojo es una app para pedir comida: la gente pide a restaurantes de su colonia, los restaurantes cocinan y los repartidores entregan. Los pedidos pasan por web-gateway a orders-api, que le pregunta a inventory-api si cada platillo está disponible y guarda el pedido en orders-db. Cada servicio es de un equipo distinto.",
   "briefing.role": "Esta semana te toca la guardia de pedidos. Es viernes en la noche, bueno, técnicamente sábado. Las taquerías de madrugada siguen recibiendo pedidos.",
   "briefing.tonight": "02:52. Los pedidos están fallando.",

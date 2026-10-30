@@ -58,7 +58,6 @@
   "folder.case.locked": "Caso {number} · bloqueado",
   "folder.lockedHint": "Se abre cuando cierres el caso {previous}.",
   "phone.label": "Teléfono",
-  "phone.date": "JUE 12 MAR",
   "phone.sincePage": "+{minutes} MIN DESDE EL AVISO",
   "phone.page": "AVISO · SEV-2 · {clock}",
   "phone.ack": "ATENDER",
