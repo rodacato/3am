@@ -10,7 +10,7 @@ const read = (path: string) => JSON.parse(readFileSync(join(root, path), 'utf8')
 export const LOCALES = ['en', 'es-MX'] as const;
 export type Locale = (typeof LOCALES)[number];
 
-export const CASES = { 'case-01': { pagedAt: '03:14' }, 'case-02': { pagedAt: '02:52' } } as const;
+export const CASES = { 'case-01': { pagedAt: '03:14' }, 'case-02': { pagedAt: '02:52' }, 'case-03': { pagedAt: '02:58' } } as const;
 export type CaseId = keyof typeof CASES;
 
 // Strings come from the locale files, so the tests follow the copy instead of duplicating it.
