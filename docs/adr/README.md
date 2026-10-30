@@ -14,3 +14,4 @@
 - [0012 Align with Dojo's scroll protocol](0012-dojo-integration.md)
 - [0013 The rubric checks shape, and a name is a question](0013-rubric-checks-shape-not-truth.md)
 - [0014 A case has variants with different root causes](0014-case-variants.md)
+- [0015 Calls can wait on a connection pool](0015-connection-pool.md)

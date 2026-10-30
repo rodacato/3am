@@ -1,6 +1,7 @@
 import type { CaseData, Component, Effect } from './case-schema';
 import { effectWindow, timedChanges } from './jitter';
 import { smoothNoise } from './noise';
+import { poolState, type PoolState } from './pool';
 
 export type AppliedMitigation = { id: string; startedAt: number; effectiveAt: number };
 
@@ -18,7 +19,16 @@ export type ComponentState = {
   trafficFactor: number;
 };
 
-export type CallState = { id: string; from: string; to: string; operation: string; timeoutMs: number; maxAttempts: number };
+export type CallState = {
+  id: string;
+  from: string;
+  to: string;
+  operation: string;
+  timeoutMs: number;
+  maxAttempts: number;
+  perRequest: number;
+  pool: PoolState | null;
+};
 
 export type SystemState = {
   minute: number;
@@ -151,12 +161,14 @@ export function systemStateAt(s: Scenario, minute: number): SystemState {
   const config = configAt(s, minute);
   const components = new Map(s.data.components.map((c) => [c.id, componentStateAt(s, c, minute)]));
   const calls = new Map<string, CallState>();
+  const pools: PendingPool[] = [];
   for (const component of s.data.components) {
     for (const call of component.calls) {
       const read = (key: string | undefined, fallback: number) => {
         const value = key ? config[component.id]?.[key] : undefined;
         return typeof value === 'number' ? value : fallback;
       };
+      const tuned = callTuningAt(s, component.id, call.id, minute);
       calls.set(call.id, {
         id: call.id,
         from: component.id,
@@ -164,11 +176,80 @@ export function systemStateAt(s: Scenario, minute: number): SystemState {
         operation: call.operation,
         timeoutMs: read(call.configKeys.timeoutMs, call.timeoutMs),
         maxAttempts: read(call.configKeys.maxAttempts, call.maxAttempts),
+        perRequest: tuned.perRequest,
+        pool: null,
       });
+      if (call.pool) pools.push({ callId: call.id, size: read(call.configKeys.poolSize, call.pool.size), acquireTimeoutMs: call.pool.acquireTimeoutMs, tuned });
     }
   }
   const traffic = components.get(s.data.traffic.entry)?.trafficFactor ?? 1;
   const state: SystemState = { minute, entryRps: entryRps(s, minute) * traffic, components, calls };
+  attachPools(s.data, state, calls, pools);
   byMinute.set(minute, state);
   return state;
+}
+
+type CallTuning = { perRequest: number; extraHoldMs: number; leaked: number };
+type PendingPool = { callId: string; size: number; acquireTimeoutMs: number; tuned: CallTuning };
+
+function callTuningAt(s: Scenario, componentId: string, callId: string, minute: number): CallTuning {
+  const tuned: CallTuning = { perRequest: 1, extraHoldMs: 0, leaked: 0 };
+  for (const effect of s.data.effects) {
+    if (effect.component !== componentId || effect.call !== callId) continue;
+    const strength = effectStrength(effect, s, minute);
+    if (!strength) continue;
+    switch (effect.param) {
+      case 'calls.perRequest': tuned.perRequest = Math.max(0, applyEffect(tuned.perRequest, effect, strength)); break;
+      case 'pool.holdMs': tuned.extraHoldMs = Math.max(0, applyEffect(tuned.extraHoldMs, effect, strength)); break;
+      case 'pool.leaked': tuned.leaked = Math.max(0, applyEffect(tuned.leaked, effect, strength)); break;
+    }
+  }
+  return tuned;
+}
+
+const lognormalMeanMs = (median: number, sigma: number) => median * Math.exp((sigma * sigma) / 2);
+
+// Expected time inside a component, its own calls included, ignoring retries and pool waits.
+function expectedVisitMs(data: CaseData, state: SystemState, componentId: string, memo: Map<string, number>): number {
+  const known = memo.get(componentId);
+  if (known !== undefined) return known;
+  const live = state.components.get(componentId);
+  const component = data.components.find((c) => c.id === componentId);
+  if (!live || !component) return 0;
+  let ms = (1 - live.tail.ratio) * lognormalMeanMs(live.latency.medianMs, live.latency.sigma) + live.tail.ratio * lognormalMeanMs(live.tail.medianMs, live.tail.sigma);
+  for (const call of component.calls) ms += (state.calls.get(call.id)?.perRequest ?? 1) * expectedVisitMs(data, state, call.to, memo);
+  memo.set(componentId, ms);
+  return ms;
+}
+
+// How often each component is visited per request that enters the system.
+function visitsPerEntry(data: CaseData, state: SystemState): Map<string, number> {
+  const visits = new Map<string, number>();
+  const walk = (componentId: string, times: number) => {
+    visits.set(componentId, (visits.get(componentId) ?? 0) + times);
+    const component = data.components.find((c) => c.id === componentId);
+    for (const call of component?.calls ?? []) walk(call.to, times * (state.calls.get(call.id)?.perRequest ?? 1));
+  };
+  walk(data.traffic.entry, 1);
+  return visits;
+}
+
+function attachPools(data: CaseData, state: SystemState, calls: Map<string, CallState>, pools: readonly PendingPool[]): void {
+  if (!pools.length) return;
+  const visits = visitsPerEntry(data, state);
+  const memo = new Map<string, number>();
+  for (const pending of pools) {
+    const call = calls.get(pending.callId) as CallState;
+    const pool = poolState({
+      size: pending.size,
+      maxConnections: data.components.find((c) => c.id === call.to)?.maxConnections,
+      instances: state.components.get(call.from)?.instances ?? 1,
+      callsPerSecond: state.entryRps * (visits.get(call.from) ?? 0) * call.perRequest,
+      holdMs: expectedVisitMs(data, state, call.to, memo),
+      extraHoldMs: pending.tuned.extraHoldMs,
+      leaked: pending.tuned.leaked,
+      acquireTimeoutMs: pending.acquireTimeoutMs,
+    });
+    calls.set(call.id, { ...call, pool });
+  }
 }

@@ -41,7 +41,8 @@ export function pulseAt(s: Scenario, now: number): Pulse {
         for (const a of aggregates) {
           const e = a.client[call.id];
           if (!e) continue;
-          attempts += e.histogram.count;
+          // A call that never got a pooled connection never reached this component.
+          attempts += e.histogram.count - e.outcomes.pool_timeout;
           failed += e.outcomes.timeout + e.outcomes.error;
         }
       }
@@ -55,7 +56,7 @@ export function pulseAt(s: Scenario, now: number): Pulse {
         const e = a.client[call.id];
         if (!e) continue;
         attempts += e.histogram.count * a.scale;
-        failed += (e.outcomes.timeout + e.outcomes.error) * a.scale;
+        failed += (e.outcomes.timeout + e.outcomes.error + e.outcomes.pool_timeout) * a.scale;
       }
       calls[call.id] = { failRatio: attempts ? failed / attempts : 0, rps: attempts / (60 * Math.max(1, aggregates.length)) };
     }

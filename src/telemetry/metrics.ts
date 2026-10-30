@@ -20,6 +20,11 @@ export const METRICS: readonly MetricDescriptor[] = [
   { name: 'http_client_requests_total', type: 'sum', unit: '1', description: 'Outgoing call attempts by outcome.', labelNames: ['service', 'peer_service', 'outcome'] },
   { name: 'process_cpu_utilization_ratio', type: 'gauge', unit: '1', description: 'CPU busy ratio per instance, averaged.', labelNames: ['service'] },
   { name: 'process_memory_usage_bytes', type: 'gauge', unit: 'By', description: 'Resident memory per instance.', labelNames: ['service'] },
+  { name: 'db_client_connections_usage', type: 'gauge', unit: '{connection}', description: 'Pooled connections by state, summed across instances.', labelNames: ['service', 'pool_name', 'state'] },
+  { name: 'db_client_connections_max', type: 'gauge', unit: '{connection}', description: 'Connections the pools may open, summed across instances, after the database limit.', labelNames: ['service', 'pool_name'] },
+  { name: 'db_client_connections_pending_requests', type: 'gauge', unit: '{request}', description: 'Requests waiting for a connection, summed across instances.', labelNames: ['service', 'pool_name'] },
+  { name: 'db_client_connections_wait_time_seconds', type: 'histogram', unit: 's', description: 'Time to obtain a connection, one observation per acquisition, timeouts included.', labelNames: ['service', 'pool_name'] },
+  { name: 'db_client_connections_use_time_seconds', type: 'histogram', unit: 's', description: 'Time between borrowing a connection and returning it.', labelNames: ['service', 'pool_name'] },
 ];
 
 const LE_LABELS = [...LATENCY_BUCKETS_S.map(String), '+Inf'];
@@ -44,6 +49,33 @@ function histogramSeries(name: string, base: Labels, pick: (a: MinuteAggregate) 
   return series;
 }
 
+function poolAt(s: Scenario, callId: string, minute: number) {
+  return systemStateAt(s, minute).calls.get(callId)?.pool ?? null;
+}
+
+// Gauges come from the minute's pool state; pending requests and both histograms from the simulated acquisitions.
+function poolSeries(service: string, callId: string, poolName: string): SeriesDef[] {
+  const base = { service, pool_name: poolName };
+  const gauge = (name: string, labels: Labels, value: (s: Scenario, minute: number) => number): SeriesDef => ({
+    id: `${name}/${callId}/${Object.values(labels).join('/')}`, labels: { __name__: name, ...base, ...labels }, kind: 'gauge', gauge: value,
+  });
+  const total = (s: Scenario, m: number, pick: (p: NonNullable<ReturnType<typeof poolAt>>) => number) => {
+    const pool = poolAt(s, callId, m);
+    return pool ? Math.round(pick(pool) * pool.instances) : 0;
+  };
+  return [
+    gauge('db_client_connections_usage', { state: 'used' }, (s, m) => total(s, m, (p) => p.inUse)),
+    gauge('db_client_connections_usage', { state: 'idle' }, (s, m) => total(s, m, (p) => p.size) - total(s, m, (p) => p.inUse)),
+    gauge('db_client_connections_max', {}, (s, m) => total(s, m, (p) => p.size)),
+    gauge('db_client_connections_pending_requests', {}, (s, m) => {
+      const a = aggregateMinute(s, m);
+      return ((a.pools[callId]?.waitMsTotal ?? 0) * a.scale) / 60_000;
+    }),
+    ...histogramSeries('db_client_connections_wait_time_seconds', base, (a) => a.pools[callId]?.wait),
+    ...histogramSeries('db_client_connections_use_time_seconds', base, (a) => a.pools[callId]?.use),
+  ];
+}
+
 const catalogCache = new WeakMap<Scenario['data'], SeriesDef[]>();
 
 export function seriesCatalog(s: Scenario): SeriesDef[] {
@@ -65,12 +97,14 @@ export function seriesCatalog(s: Scenario): SeriesDef[] {
       for (const call of component.calls) {
         const base2 = { service: component.id, peer_service: call.to };
         out.push(...histogramSeries('http_client_request_duration_seconds', base2, (a) => a.client[call.id]?.histogram));
-        for (const outcome of ['ok', 'error', 'timeout'] as const) {
+        const outcomes = call.pool ? (['ok', 'error', 'timeout', 'pool_timeout'] as const) : (['ok', 'error', 'timeout'] as const);
+        for (const outcome of outcomes) {
           out.push({
             id: `http_client_requests_total/${call.id}/${outcome}`, labels: { __name__: 'http_client_requests_total', ...base2, outcome }, kind: 'counter',
             increment: (a) => (a.client[call.id]?.outcomes[outcome] ?? 0) * a.scale,
           });
         }
+        if (call.pool) out.push(...poolSeries(component.id, call.id, call.to));
       }
     }
     if (component.kind !== 'external' && component.instrumented) {
@@ -89,7 +123,10 @@ function componentRps(s: Scenario, componentId: string, minute: number): number 
   if (served !== undefined) return (served * a.scale) / 60;
   let calls = 0;
   for (const component of s.data.components) {
-    for (const call of component.calls) if (call.to === componentId) calls += a.client[call.id]?.histogram.count ?? 0;
+    for (const call of component.calls) {
+      const client = a.client[call.id];
+      if (call.to === componentId && client) calls += client.histogram.count - client.outcomes.pool_timeout;
+    }
   }
   return (calls * a.scale) / 60;
 }
