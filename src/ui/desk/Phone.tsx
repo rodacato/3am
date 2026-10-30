@@ -32,7 +32,7 @@ export function Phone({ session, displayClock, onFocus, focused }: Props) {
           {on && (
             <div>
               <div className="phone__clock" aria-live="polite">{clockLabel(displayClock)}</div>
-              <div className="phone__date">{t('phone.date')}{phase !== 'paged' ? ` · ${t('phone.sincePage', { minutes: displayClock - data.page.at })}` : ''}</div>
+              <div className="phone__date">{t('case.phoneDate')}{phase !== 'paged' ? ` · ${t('phone.sincePage', { minutes: displayClock - data.page.at })}` : ''}</div>
             </div>
           )}
           {phase === 'paged' && (

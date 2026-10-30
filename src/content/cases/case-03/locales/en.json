@@ -1,6 +1,7 @@
 {
   "title": "The Loud Cache",
   "company": "Hamaca",
+  "phoneDate": "FRI 27 MAR",
   "briefing.company": "Hamaca sells rooms in small hotels and haciendas across Yucatán, from an office in Mérida. Most guests book from Europe, where it is already morning, and metasearch sites ask for prices all night. Requests come through edge to bookings-api, which reads availability from rooms-cache, queries bookings-db through a pool of connections, and asks channel-mgr, an outside channel manager, for live rates.",
   "briefing.role": "You're on call for bookings this week. It's Friday, a few hours before the first flights land in Cancún. The office is dark; Europe is wide awake.",
   "briefing.tonight": "02:58. Availability is slow, and the cache is shouting.",

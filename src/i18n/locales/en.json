@@ -58,7 +58,6 @@
   "folder.case.locked": "Case {number} · locked",
   "folder.lockedHint": "Opens once you close case {previous}.",
   "phone.label": "Phone",
-  "phone.date": "THU 12 MAR",
   "phone.sincePage": "+{minutes} MIN SINCE THE PAGE",
   "phone.page": "PAGE · SEV-2 · {clock}",
   "phone.ack": "ACKNOWLEDGE",
