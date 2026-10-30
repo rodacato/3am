@@ -74,7 +74,9 @@ export function simulateRequest(s: Scenario, minute: number, index: number, with
     for (const call of component.calls) {
       const callState = state.calls.get(call.id);
       if (!callState) continue;
-      for (let n = repetitions(callState.perRequest, rng); n > 0; n--) {
+      let failed = false;
+      // Once a repetition has failed every attempt, the request stops making that call.
+      for (let n = repetitions(callState.perRequest, rng); n > 0 && !failed; n--) {
         for (let attempt = 1; attempt <= callState.maxAttempts; attempt++) {
           const clientSpanId = rng.hex(16);
           const pool = callState.pool;
@@ -96,7 +98,7 @@ export function simulateRequest(s: Scenario, minute: number, index: number, with
           if (withSpans) record.spans.push(clientSpan(record.traceId, clientSpanId, spanId, component.id, call.to, call.operation, cursor, end, attempt, outcome, callState.timeoutMs, pool && acquired ? { waitMs: acquired.waitMs, acquireTimeoutMs: pool.acquireTimeoutMs } : null));
           cursor = end;
           if (outcome === 'ok') break;
-          if (attempt === callState.maxAttempts) error = true;
+          if (attempt === callState.maxAttempts) error = failed = true;
           else cursor += RETRY_BACKOFF_MS * attempt;
         }
       }

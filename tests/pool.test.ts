@@ -107,6 +107,18 @@ describe('pooled calls in the simulation', () => {
     expect(calls.filter((c) => c.outcome !== 'pool_timeout').every((c) => (c.poolWaitMs ?? 0) < 1000)).toBe(true);
   });
 
+  it('a call made several times per request multiplies demand, and stops at the first one that fails', () => {
+    const misses: EffectInput = { id: 'misses', param: 'calls.perRequest', op: 'set', value: 3 };
+    const tripled = pooled('pool-repeat', [misses, ...hold(30)]);
+    expect(poolOf(tripled).overflow).toBeGreaterThan(0.2);
+    const perEntry = (data: CaseData) => poolOf(data).demand / systemStateAt(scenario(data), MINUTE).entryRps;
+    expect(perEntry(pooled('pool-repeat-only', [misses]))).toBeCloseTo(perEntry(pooled('pool-repeat-base')) * 3, 5);
+    const requests = [...requestsInMinute(scenario(tripled), MINUTE, false)].map((r) => r.calls.filter((c) => c.callId === 'checkout.db'));
+    expect(requests.some((calls) => calls.length === 3)).toBe(true);
+    expect(requests.some((calls) => calls.length < 3 && calls.at(-1)?.outcome === 'pool_timeout')).toBe(true);
+    expect(requests.every((calls) => calls.filter((c) => c.outcome === 'pool_timeout').length <= 1)).toBe(true);
+  });
+
   it('a held connection shows in use time, not in the database call', () => {
     const plain = aggregateMinute(scenario(pooled('pool-hold-plain')), MINUTE).pools['checkout.db'];
     const held = aggregateMinute(scenario(pooled('pool-hold-held', hold(30))), MINUTE).pools['checkout.db'];
