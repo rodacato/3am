@@ -7,13 +7,17 @@ const textKey = z.string().min(1);
 
 const latencySchema = z.object({ medianMs: z.number().positive(), sigma: z.number().min(0) });
 
+// A connection pool per caller instance: a call waits for a free connection before it reaches the callee.
+export const poolSchema = z.object({ size: z.number().int().positive(), acquireTimeoutMs: z.number().positive() });
+
 export const callSchema = z.object({
   id,
   to: id,
   operation: z.string(),
   timeoutMs: z.number().positive(),
   maxAttempts: z.number().int().min(1),
-  configKeys: z.object({ timeoutMs: z.string().optional(), maxAttempts: z.string().optional() }).default({}),
+  pool: poolSchema.optional(),
+  configKeys: z.object({ timeoutMs: z.string().optional(), maxAttempts: z.string().optional(), poolSize: z.string().optional() }).default({}),
 });
 
 export const componentSchema = z.object({
@@ -28,6 +32,8 @@ export const componentSchema = z.object({
   errorRatio: z.number().min(0).max(1).default(0),
   cpu: z.object({ base: z.number().min(0), perRps: z.number().min(0) }),
   memoryMb: z.number().positive(),
+  // The server's connection limit, split between the instances of the service whose pool calls it.
+  maxConnections: z.number().int().positive().optional(),
   calls: z.array(callSchema).default([]),
 });
 
@@ -53,11 +59,18 @@ export const changeSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('flag'), id, at: minute, flag: z.string(), from: z.boolean(), to: z.boolean(), author: z.string(), messageKey: textKey, jitterMin }),
 ]);
 
-export const effectParam = z.enum(['latency.medianMs', 'tail.ratio', 'tail.medianMs', 'errorRatio', 'cpu', 'memoryMb', 'traffic']);
+export const effectParam = z.enum([
+  'latency.medianMs', 'tail.ratio', 'tail.medianMs', 'errorRatio', 'cpu', 'memoryMb', 'traffic',
+  'calls.perRequest', 'pool.holdMs', 'pool.leaked',
+]);
+
+// Params about one of the component's calls rather than the component itself; they need `call`.
+export const CALL_PARAMS: ReadonlySet<string> = new Set(['calls.perRequest', 'pool.holdMs', 'pool.leaked']);
 
 export const effectSchema = z.object({
   id,
   component: id,
+  call: id.optional(),
   param: effectParam,
   op: z.enum(['set', 'add', 'mul']),
   value: z.number(),
@@ -94,6 +107,7 @@ export const logTemplateSchema = z.object({
     z.object({ kind: z.literal('rate'), perMin: z.number().min(0), from: minute.optional(), until: minute.optional(), followsEffect: id.optional() }),
     z.object({ kind: z.literal('attemptTimeout'), call: id }),
     z.object({ kind: z.literal('retry'), call: id }),
+    z.object({ kind: z.literal('poolTimeout'), call: id }),
     z.object({ kind: z.literal('serverError') }),
     z.object({ kind: z.literal('slowRequest'), thresholdMs: z.number().positive() }),
   ]),
@@ -213,6 +227,7 @@ export type Variant = z.infer<typeof variantSchema>;
 export type VariantInput = z.input<typeof variantSchema>;
 export type Component = z.infer<typeof componentSchema>;
 export type Call = z.infer<typeof callSchema>;
+export type Pool = z.infer<typeof poolSchema>;
 export type Change = z.infer<typeof changeSchema>;
 export type Effect = z.infer<typeof effectSchema>;
 export type Mitigation = z.infer<typeof mitigationSchema>;
@@ -273,6 +288,7 @@ function validateVariant(data: CaseData, named: boolean): void {
   const problems: string[] = [];
   const components = new Set(data.components.map((c) => c.id));
   const calls = new Set(data.components.flatMap((c) => c.calls.map((call) => call.id)));
+  const pooled = new Set(data.components.flatMap((c) => c.calls.filter((call) => call.pool).map((call) => call.id)));
   const mitigations = new Set(data.mitigations.map((m) => m.id));
   const changes = new Set(data.changes.map((c) => c.id));
   const nodes = new Set(data.causalChain.nodes.map((n) => n.id));
@@ -282,13 +298,22 @@ function validateVariant(data: CaseData, named: boolean): void {
   need(components.has(data.traffic.entry), `traffic.entry ${data.traffic.entry} is not a component`);
   data.components.forEach((c) => c.calls.forEach((call) => need(components.has(call.to), `call ${call.id} targets unknown ${call.to}`)));
   data.changes.forEach((c) => { if (c.kind !== 'flag') need(components.has(c.component), `change ${c.id} targets unknown ${c.component}`); });
+  data.components.forEach((c) => {
+    const pooled = c.calls.filter((call) => call.pool).map((call) => call.to);
+    need(new Set(pooled).size === pooled.length, `${c.id} has two pools to the same callee`);
+  });
   data.effects.forEach((e) => {
     need(components.has(e.component), `effect ${e.id} targets unknown ${e.component}`);
+    const call = data.components.find((c) => c.id === e.component)?.calls.find((x) => x.id === e.call);
+    if (!CALL_PARAMS.has(e.param)) need(e.call === undefined, `effect ${e.id} names a call but ${e.param} is not about calls`);
+    else need(call !== undefined, `effect ${e.id} needs a call of ${e.component} for ${e.param}`);
+    if (e.param.startsWith('pool.')) need(call?.pool !== undefined, `effect ${e.id} changes a pool, but call ${e.call} has none`);
     [...e.removedBy, ...e.resetBy].forEach((m) => need(mitigations.has(m), `effect ${e.id} names unknown mitigation ${m}`));
   });
   data.logs.forEach((l) => {
     need(components.has(l.component), `log ${l.id} names unknown ${l.component}`);
     if ('call' in l.trigger) need(calls.has(l.trigger.call), `log ${l.id} names unknown call ${l.trigger.call}`);
+    if (l.trigger.kind === 'poolTimeout') need(pooled.has(l.trigger.call), `log ${l.id} waits on call ${l.trigger.call}, which has no pool`);
     if (l.trigger.kind === 'rate' && l.trigger.followsEffect) need(data.effects.some((e) => e.id === (l.trigger as { followsEffect?: string }).followsEffect), `log ${l.id} follows unknown effect`);
   });
   data.mitigations.forEach((m) => m.actions.forEach((a) => {

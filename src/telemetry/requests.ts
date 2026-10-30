@@ -1,5 +1,6 @@
 import type { Component } from '../engine/case-schema';
-import { createRng } from '../engine/random';
+import { acquire } from '../engine/pool';
+import { createRng, type Rng } from '../engine/random';
 import { nightKey, systemStateAt, type Scenario, type SystemState } from '../engine/state';
 import { minuteToMs } from '../engine/time';
 import type { Span } from './otel';
@@ -10,8 +11,12 @@ export const SAMPLE_CAP = 400;
 export const LATENCY_BUCKETS_S = [0.005, 0.01, 0.025, 0.05, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.75, 1, 1.5, 2, 3, 4, 5, 7.5, 10, 15] as const;
 const RETRY_BACKOFF_MS = 25;
 
-export type CallOutcome = 'ok' | 'error' | 'timeout';
-export type CallRecord = { callId: string; attempt: number; maxAttempts: number; startMs: number; durationMs: number; timeoutMs: number; outcome: CallOutcome; spanId: string };
+export type CallOutcome = 'ok' | 'error' | 'timeout' | 'pool_timeout';
+// poolWaitMs is null for calls without a pool; poolHoldMs is null when no connection was ever handed out.
+export type CallRecord = {
+  callId: string; attempt: number; maxAttempts: number; startMs: number; durationMs: number; timeoutMs: number; outcome: CallOutcome; spanId: string;
+  poolWaitMs: number | null; poolHoldMs: number | null;
+};
 export type ServerRecord = { component: string; startMs: number; durationMs: number; error: boolean; spanId: string };
 export type RequestRecord = {
   minute: number;
@@ -32,6 +37,7 @@ export type MinuteAggregate = {
   sampled: number;
   server: Record<string, { errors: number; histogram: Histogram }>;
   client: Record<string, { outcomes: Record<CallOutcome, number>; histogram: Histogram }>;
+  pools: Record<string, { wait: Histogram; use: Histogram; waitMsTotal: number }>;
   badRequests: number;
 };
 
@@ -68,17 +74,31 @@ export function simulateRequest(s: Scenario, minute: number, index: number, with
     for (const call of component.calls) {
       const callState = state.calls.get(call.id);
       if (!callState) continue;
-      for (let attempt = 1; attempt <= callState.maxAttempts; attempt++) {
-        const clientSpanId = rng.hex(16);
-        const callee = visit(call.to, cursor + 0.4, hasServerSpans(components.get(call.to) as Component) ? clientSpanId : null);
-        const outcome: CallOutcome = callee.endMs - cursor > callState.timeoutMs ? 'timeout' : callee.error ? 'error' : 'ok';
-        const end = outcome === 'timeout' ? cursor + callState.timeoutMs : callee.endMs + 0.4;
-        record.calls.push({ callId: call.id, attempt, maxAttempts: callState.maxAttempts, startMs: cursor, durationMs: end - cursor, timeoutMs: callState.timeoutMs, outcome, spanId: clientSpanId });
-        if (withSpans) record.spans.push(clientSpan(record.traceId, clientSpanId, spanId, component.id, call.to, call.operation, cursor, end, attempt, outcome, callState.timeoutMs));
-        cursor = end;
-        if (outcome === 'ok') break;
-        if (attempt === callState.maxAttempts) error = true;
-        else cursor += RETRY_BACKOFF_MS * attempt;
+      for (let n = repetitions(callState.perRequest, rng); n > 0; n--) {
+        for (let attempt = 1; attempt <= callState.maxAttempts; attempt++) {
+          const clientSpanId = rng.hex(16);
+          const pool = callState.pool;
+          const acquired = pool ? acquire(pool, rng) : null;
+          const base = { callId: call.id, attempt, maxAttempts: callState.maxAttempts, startMs: cursor, timeoutMs: callState.timeoutMs, spanId: clientSpanId, poolWaitMs: acquired?.waitMs ?? null };
+          let outcome: CallOutcome;
+          let end: number;
+          if (acquired?.timedOut) {
+            outcome = 'pool_timeout';
+            end = cursor + acquired.waitMs;
+            record.calls.push({ ...base, durationMs: end - cursor, outcome, poolHoldMs: null });
+          } else {
+            const start = cursor + (acquired?.waitMs ?? 0);
+            const callee = visit(call.to, start + 0.4, hasServerSpans(components.get(call.to) as Component) ? clientSpanId : null);
+            outcome = callee.endMs - start > callState.timeoutMs ? 'timeout' : callee.error ? 'error' : 'ok';
+            end = outcome === 'timeout' ? start + callState.timeoutMs : callee.endMs + 0.4;
+            record.calls.push({ ...base, durationMs: end - cursor, outcome, poolHoldMs: pool ? end - start + pool.extraHoldMs : null });
+          }
+          if (withSpans) record.spans.push(clientSpan(record.traceId, clientSpanId, spanId, component.id, call.to, call.operation, cursor, end, attempt, outcome, callState.timeoutMs, pool && acquired ? { waitMs: acquired.waitMs, acquireTimeoutMs: pool.acquireTimeoutMs } : null));
+          cursor = end;
+          if (outcome === 'ok') break;
+          if (attempt === callState.maxAttempts) error = true;
+          else cursor += RETRY_BACKOFF_MS * attempt;
+        }
       }
     }
     if (rng.chance(live.errorRatio)) error = true;
@@ -106,11 +126,22 @@ function serverSpan(traceId: string, spanId: string, parentSpanId: string | null
   };
 }
 
-function clientSpan(traceId: string, spanId: string, parentSpanId: string, service: string, peer: string, name: string, start: number, end: number, attempt: number, outcome: CallOutcome, timeoutMs: number): Span {
+function repetitions(perRequest: number, rng: Rng): number {
+  const whole = Math.floor(perRequest);
+  return perRequest > whole && rng.chance(perRequest - whole) ? whole + 1 : whole;
+}
+
+function failureMessage(outcome: CallOutcome, timeoutMs: number, acquireTimeoutMs: number): string {
+  if (outcome === 'timeout') return `timeout after ${timeoutMs}ms`;
+  if (outcome === 'pool_timeout') return `could not acquire connection in ${acquireTimeoutMs} ms`;
+  return 'upstream error';
+}
+
+function clientSpan(traceId: string, spanId: string, parentSpanId: string, service: string, peer: string, name: string, start: number, end: number, attempt: number, outcome: CallOutcome, timeoutMs: number, pool: { waitMs: number; acquireTimeoutMs: number } | null): Span {
   return {
     traceId, spanId, parentSpanId, name, kind: 'CLIENT', service, startMs: start, endMs: end,
-    status: outcome === 'ok' ? { code: 'UNSET' } : { code: 'ERROR', message: outcome === 'timeout' ? `timeout after ${timeoutMs}ms` : 'upstream error' },
-    attributes: { 'peer.service': peer, 'retry.attempt': attempt, 'client.timeout_ms': timeoutMs },
+    status: outcome === 'ok' ? { code: 'UNSET' } : { code: 'ERROR', message: failureMessage(outcome, timeoutMs, pool?.acquireTimeoutMs ?? 0) },
+    attributes: { 'peer.service': peer, 'retry.attempt': attempt, 'client.timeout_ms': timeoutMs, ...(pool ? { 'pool.wait_ms': Math.round(pool.waitMs) } : {}) },
     events: outcome === 'timeout' ? [{ name: 'timeout', timeMs: end, attributes: { 'client.timeout_ms': timeoutMs } }] : [],
   };
 }
@@ -149,7 +180,7 @@ export function aggregateMinute(s: Scenario, minute: number): MinuteAggregate {
 
   const state = systemStateAt(s, minute);
   const { sampled, scale } = sampleCount(state);
-  const aggregate: MinuteAggregate = { minute, scale, sampled, server: {}, client: {}, badRequests: 0 };
+  const aggregate: MinuteAggregate = { minute, scale, sampled, server: {}, client: {}, pools: {}, badRequests: 0 };
   for (const request of requestsInMinute(s, minute, false)) {
     for (const server of request.servers) {
       const entry = (aggregate.server[server.component] ??= { errors: 0, histogram: emptyHistogram() });
@@ -157,9 +188,14 @@ export function aggregateMinute(s: Scenario, minute: number): MinuteAggregate {
       if (server.error) entry.errors += 1;
     }
     for (const call of request.calls) {
-      const entry = (aggregate.client[call.callId] ??= { outcomes: { ok: 0, error: 0, timeout: 0 }, histogram: emptyHistogram() });
+      const entry = (aggregate.client[call.callId] ??= { outcomes: { ok: 0, error: 0, timeout: 0, pool_timeout: 0 }, histogram: emptyHistogram() });
       observe(entry.histogram, call.durationMs);
       entry.outcomes[call.outcome] += 1;
+      if (call.poolWaitMs === null) continue;
+      const pool = (aggregate.pools[call.callId] ??= { wait: emptyHistogram(), use: emptyHistogram(), waitMsTotal: 0 });
+      observe(pool.wait, call.poolWaitMs);
+      pool.waitMsTotal += call.poolWaitMs;
+      if (call.poolHoldMs !== null) observe(pool.use, call.poolHoldMs);
     }
     if (request.error || request.durationMs > s.data.impact.slowMs) aggregate.badRequests += 1;
   }

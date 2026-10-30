@@ -40,7 +40,7 @@ function makeRecord(t: LogTemplate, timeMs: number, body: string, seq: number, m
 }
 
 function callFill(call: CallRecord, peer: string): Fill {
-  return { attempt: call.attempt, maxAttempts: call.maxAttempts, timeoutMs: call.timeoutMs, elapsedMs: Math.round(call.durationMs), peer };
+  return { attempt: call.attempt, maxAttempts: call.maxAttempts, timeoutMs: call.timeoutMs, elapsedMs: Math.round(call.durationMs), waitMs: Math.round(call.poolWaitMs ?? 0), peer };
 }
 
 function serverFill(server: ServerRecord): Fill {
@@ -65,10 +65,10 @@ export function logsInMinute(s: Scenario, minute: number): LogRecord[] {
     for (const request of requestsInMinute(s, minute, false)) {
       for (const t of spanTemplates) {
         const trig = t.trigger;
-        if (trig.kind === 'attemptTimeout' || trig.kind === 'retry') {
+        if (trig.kind === 'attemptTimeout' || trig.kind === 'retry' || trig.kind === 'poolTimeout') {
           for (const call of request.calls) {
             if (call.callId !== trig.call) continue;
-            const hit = trig.kind === 'attemptTimeout' ? call.outcome === 'timeout' : call.outcome !== 'ok' && call.attempt < call.maxAttempts;
+            const hit = trig.kind === 'retry' ? call.outcome !== 'ok' && call.attempt < call.maxAttempts : call.outcome === (trig.kind === 'attemptTimeout' ? 'timeout' : 'pool_timeout');
             if (!hit) continue;
             const fill: Fill = { ...callFill(call, peers.get(call.callId) ?? ''), orderId: `ord_${rng.hex(6)}` };
             const time = call.startMs + call.durationMs + (trig.kind === 'retry' ? 1 : 0);
