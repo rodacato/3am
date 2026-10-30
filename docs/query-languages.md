@@ -30,8 +30,10 @@ Named after the OpenTelemetry semantic conventions as Prometheus exports them. S
 - `http_server_request_duration_seconds_bucket|_count|_sum{service, http_route, le}`
 - `http_server_requests_total{service, http_route, status_class}`
 - `http_client_request_duration_seconds_bucket|_count|_sum{service, peer_service, le}`: one observation per attempt
-- `http_client_requests_total{service, peer_service, outcome}`: `ok`, `error`, `timeout`
+- `http_client_requests_total{service, peer_service, outcome}`: `ok`, `error`, `timeout`, and `pool_timeout` on calls that wait on a connection pool
 - `process_cpu_utilization_ratio{service}`, `process_memory_usage_bytes{service}`
+
+Where a service reaches a database through a connection pool, also: `db_client_connections_usage{service, pool_name, state}` (`used`, `idle`), `db_client_connections_max` and `db_client_connections_pending_requests{service, pool_name}`, summed across instances, and the histograms `db_client_connections_wait_time_seconds` and `db_client_connections_use_time_seconds`.
 
 External dependencies have no server-side series: you only see them through client metrics and spans, as in real life.
 
